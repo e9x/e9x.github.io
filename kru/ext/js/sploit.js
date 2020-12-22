@@ -22,7 +22,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 	}).contentWindow,
 	add = Symbol(),
 	values = {
-		version: '1.0.6',
+		version: '1.0.7',
 		oconfig: {
 			esp: {
 				status: 'off',
@@ -396,7 +396,11 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			
 			if(!cheat.controls || !cheat.world || !cheat.player)return;
 			
-			cheat.game.players.list.forEach(ent => {
+			var ind, ent;
+			
+			for(ind in cheat.game.players.list){
+				ent = cheat.game.players.list[ind];
+				
 				if(!ent[add])ent[add] = {
 					pos: {
 						distanceTo(p2){return Math.hypot(this.x - p2.x, this.y - p2.y, this.z - p2.z)},
@@ -435,8 +439,8 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				var normal = ent[add].inview;
 				
 				ent[add].inview = cheat.hide_nametags ? false : config.esp.nametags ? true : normal;
-			});
-		}catch(err){ cheat.err('CAUGHT:', err) }},
+			};
+		}catch(err){ cheat.err('CAUGHT:', err); }},
 		render(){ try{ // rendering tasks
 			if(!cheat.cas || !cheat.ctx){
 				cheat.cas = document.querySelector('#game-overlay');
@@ -909,7 +913,7 @@ fetch('https://cdnjs.cloudflare.com/ajax/libs/three.js/r123/three.min.js').then(
 });
 
 // REMOVE LATER
-window.cheese = cheat;
+// window.cheese = cheat;
 
 // pass storage object to game
 cheat.patches.set(/^/, 'return ((ssd, Proxy) => { ');
