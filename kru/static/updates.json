@@ -1,8 +1,8 @@
 {
 	"url": "https://github.com/vibedivide/sploit/releases/",
 	"extension": {
-		"version": "1.0.6",
-		"install": "https://github.com/vibedivide/sploit/releases/download/1.0.6/ext.zip"
+		"version": "1.0.7",
+		"install": "https://github.com/e9x/e9x.github.io/releases/download/1.0.7/ext.zip"
 	},
 	"client": {
 		"version": "1.0.5",

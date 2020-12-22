@@ -600,26 +600,28 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				
 				// console.log(obj);
 				
-				if(obj.type != 'Mesh' || !obj.dSrc || obj.material[cheat.symbols.hooked])return;
-				
-				obj.material[cheat.symbols.hooked] = true;
-				
-				var otra = obj.material.transparent,
-					opac = obj.material.opacity;
-				
-				Object.defineProperties(obj.material, {
-					opacity: {
-						get: _ => config.esp.walls ? opac * config.esp.wall_opac : opac,
-						set: _ => opac = _,
-					},
-					transparent: {
-						get: _ => config.esp.walls ? true : otra,
-						set: _ => otra = _,
-					},
-				});
+				if(obj.type == 'Mesh' && obj.dSrc && !obj.material[cheat.syms.hooked]){
+					obj.material[cheat.syms.hooked] = true;
+					
+					var otra = obj.material.transparent,
+						opac = obj.material.opacity;
+					
+					Object.defineProperties(obj.material, {
+						opacity: {
+							get: _ => config.esp.walls ? opac * config.esp.wall_opac : opac,
+							set: _ => opac = _,
+						},
+						transparent: {
+							get: _ => config.esp.walls ? true : otra,
+							set: _ => otra = _,
+						},
+					});
+				}
 			};
 			
-			cheat.game.players.list.filter(ent => ent[add] && ent[add].active && ent[add].frustum && !ent[add].is_you).forEach(ent => {
+			var ind, ent;
+			
+			for(ind in cheat.game.players.list){ ent = cheat.game.players.list[ind]; if(ent[add] && ent[add].active && ent[add].frustum && !ent[add].is_you){
 				var src_pos = cheat.wrld2scrn(ent[add].pos),
 					src_pos_crouch = cheat.wrld2scrn(ent[add].pos, ent.height - ent[add].crouch * 3),
 					esp_width = ~~((src_pos.y - cheat.wrld2scrn(ent[add].pos, ent.height).y) * 0.7),
@@ -736,7 +738,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 					cheat.ctr('lineTo', [src_pos.x, src_pos.y - esp_height / 2]);
 					cheat.ctr('stroke');
 				}
-			});
+			}}
 		}catch(err){ cheat.err(err) }},
 		find_vars: [
 			['isYou', /this\['accid'\]=0x0,this\['(\w+)'\]=\w+,this\['isPlayer'\]/, 1],
