@@ -1,0 +1,24 @@
+{
+	"name": "Sploit",
+	"version": "1.0.6",
+	"description": "Krunker cheat loader",
+	"manifest_version": 2,
+	"permissions": [
+		"webRequest",
+		"webRequestBlocking",
+		"downloads",
+		"tabs",
+		"https://krunker.io/libs/*",
+		"https://comp.krunker.io/libs/*"
+	],
+	"background": {
+		"scripts": ["js/bg.js"],
+		"persistent": true
+	},
+	"icons": {
+		"48": "src/icon.png"
+	},
+	"web_accessible_resources": [
+		"js/*.js"
+	]
+}
