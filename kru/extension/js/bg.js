@@ -2,7 +2,7 @@ var sploit = {
 		target: '/libs/howler.min.js',
 		replace: chrome.runtime.getURL('js/sploit.js'),
 		manifest: chrome.runtime.getURL('manifest.json'),
-		updates: 'https://raw.githubusercontent.com/vibedivide/sploit/master/static/updates.json?ts=' + Date.now(),
+		updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
 	},
 	check_for_updates = async () => {
 		var manifest = await fetch(sploit.manifest).then(res => res.json()),
