@@ -373,6 +373,49 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			
 			this[cheat.syms.procInputs](data, ...args);
 		},
+		ent_vals(ent){
+			if(!ent[add])ent[add] = {
+				pos: {
+					distanceTo(p2){return Math.hypot(this.x - p2.x, this.y - p2.y, this.z - p2.z)},
+					get x(){ return ent.x || 0 },
+					get y(){ return ent.y || 0 },
+					get z(){ return ent.z || 0 },
+					project(t){ return this.applyMatrix4(t.matrixWorldInverse).applyMatrix4(t.projectionMatrix)},
+					applyMatrix4: function(t){var e=this.x,n=this.y,r=this.z,i=t.elements,a=1/(i[3]*e+i[7]*n+i[11]*r+i[15]);return this.x=(i[0]*e+i[4]*n+i[8]*r+i[12])*a,this.y=(i[1]*e+i[5]*n+i[9]*r+i[13])*a,this.z=(i[2]*e+i[6]*n+i[10]*r+i[14])*a,this},
+				},
+				get aiming(){
+					return !ent[cheat.vars.aimVal] || ent.weapon.noAim || cheat.target && cheat.target[add] && ent.weapon.melee && ent[add].pos.distanceTo(cheat.target[add].pos) <= 18;
+				},
+				get crouch(){ return ent[cheat.vars.crouchVal] },
+				get obj(){ return ent && ent.lowerBody && ent.lowerBody.parent && ent.lowerBody.parent ? ent.lowerBody.parent.parent : null },
+				// [cheat.vars.objInstances] },
+				get max_health(){ return ent[cheat.vars.maxHealth] },
+				get pos2D(){ return ent.x != null ? cheat.wrld2scrn(ent[add].pos) : { x: 0, y: 0 } },
+				get canSee(){
+					return ent[add].active && cheat.game[cheat.vars.canSee](cheat.player, ent[add].pos.x, ent[add].pos.y, ent[add].pos.z) == null ? true : false;
+					// return ent[add].active && cheat.util.canSee(cheat.player, ent) == null ? true : false;
+				},
+				// cheat.util.containsPoint(cheat.world.frustum, ent[add].pos);
+				// cheat.world.frustum.containsPoint(ent[add].pos);
+				get frustum(){ return ent[add].active && cheat.util.containsPoint(cheat.world.frustum, ent[add].pos); },
+				get active(){ return ent.x != null && cheat.ctx && ent[add].obj && ent.health > 0 },
+				get enemy(){ return !ent.team || ent.team != cheat.player.team },
+				get did_shoot(){ return ent[cheat.vars.didShoot] },
+				risk: ent.isDev || ent.isMod || ent.isMapMod || ent.canGlobalKick || ent.canViewReports || ent.partnerApp || ent.canVerify || ent.canTeleport || ent.isKPDMode || ent.level >= 30,
+				is_you: ent[cheat.vars.isYou],
+				get inview(){ return ent[cheat.vars.inView]; },
+				set inview(v){ return ent[cheat.vars.inView] = v; },
+			}
+			
+			if(ent[add].active){
+				// we are at fastest tick so we can do this
+				if(ent[add].obj)ent[add].obj.visible = true;
+				
+				var normal = ent[add].inview;
+				
+				ent[add].inview = cheat.hide_nametags ? false : config.esp.nametags ? true : normal;
+			}
+		},
 		process(){ try{
 			if(!cheat.game)return;
 			
@@ -398,48 +441,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			
 			var ind, ent;
 			
-			for(ind in cheat.game.players.list){
-				ent = cheat.game.players.list[ind];
-				
-				if(!ent[add])ent[add] = {
-					pos: {
-						distanceTo(p2){return Math.hypot(this.x - p2.x, this.y - p2.y, this.z - p2.z)},
-						get x(){ return ent.x || 0 },
-						get y(){ return ent.y || 0 },
-						get z(){ return ent.z || 0 },
-						project(t){ return this.applyMatrix4(t.matrixWorldInverse).applyMatrix4(t.projectionMatrix)},
-						applyMatrix4: function(t){var e=this.x,n=this.y,r=this.z,i=t.elements,a=1/(i[3]*e+i[7]*n+i[11]*r+i[15]);return this.x=(i[0]*e+i[4]*n+i[8]*r+i[12])*a,this.y=(i[1]*e+i[5]*n+i[9]*r+i[13])*a,this.z=(i[2]*e+i[6]*n+i[10]*r+i[14])*a,this},
-					},
-					get aiming(){
-						return !ent[cheat.vars.aimVal] || ent.weapon.noAim || cheat.target && cheat.target[add] && ent.weapon.melee && ent[add].pos.distanceTo(cheat.target[add].pos) <= 18;
-					},
-					get crouch(){ return ent[cheat.vars.crouchVal] },
-					get obj(){ return ent && ent.lowerBody && ent.lowerBody.parent && ent.lowerBody.parent ? ent.lowerBody.parent.parent : null },
-					// [cheat.vars.objInstances] },
-					get max_health(){ return ent[cheat.vars.maxHealth] },
-					get pos2D(){ return ent.x != null ? cheat.wrld2scrn(ent[add].pos) : { x: 0, y: 0 } },
-					get canSee(){ return ent[add].active && cheat.util.canSee(cheat.player, ent) == null ? true : false; },
-					// cheat.util.containsPoint(cheat.world.frustum, ent[add].pos);
-					// cheat.world.frustum.containsPoint(ent[add].pos);
-					get frustum(){ return ent[add].active && cheat.util.containsPoint(cheat.world.frustum, ent[add].pos); },
-					get active(){ return ent.x != null && cheat.ctx && ent[add].obj && ent.health > 0 },
-					get enemy(){ return !ent.team || ent.team != cheat.player.team },
-					get did_shoot(){ return ent[cheat.vars.didShoot] },
-					risk: ent.isDev || ent.isMod || ent.isMapMod || ent.canGlobalKick || ent.canViewReports || ent.partnerApp || ent.canVerify || ent.canTeleport || ent.isKPDMode || ent.level >= 30,
-					is_you: ent[cheat.vars.isYou],
-					get inview(){ return ent[cheat.vars.inView]; },
-					set inview(v){ return ent[cheat.vars.inView] = v; },
-				}
-				
-				if(!ent[add].active)return;
-				
-				// we are at fastest tick so we can do this
-				if(ent[add].obj)ent[add].obj.visible = true;
-				
-				var normal = ent[add].inview;
-				
-				ent[add].inview = cheat.hide_nametags ? false : config.esp.nametags ? true : normal;
-			};
+			cheat.game.players.list.forEach(cheat.ent_vals);
 		}catch(err){ cheat.err('CAUGHT:', err); }},
 		render(){ try{ // rendering tasks
 			if(!cheat.cas || !cheat.ctx){
@@ -750,7 +752,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			['pchObjc', /0x0,this\['(\w+)']=new \w+\['Object3D']\(\),this/, 1],
 			['aimVal', /this\['(\w+)']-=0x1\/\(this\['weapon']\['aimSpd']/, 1],
 			['crouchVal', /this\['(\w+)']\+=\w\['crouchSpd']\*\w+,0x1<=this\['\w+']/, 1],
-			// ['canSee', /\w+\['(\w+)']\(\w+,\w+\['x'],\w+\['y'],\w+\['z']\)\)&&/, 1],
+			['canSee', /\w+\['(\w+)']\(\w+,\w+\['x'],\w+\['y'],\w+\['z']\)\)&&/, 1],
 			['didShoot', /--,\w+\['(\w+)']=!0x0/, 1],
 			['ammos', /\['length'];for\(\w+=0x0;\w+<\w+\['(\w+)']\['length']/, 1],
 			['weaponIndex', /\['weaponConfig']\[\w+]\['secondary']&&\(\w+\['(\w+)']==\w+/, 1],
