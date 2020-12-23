@@ -303,6 +303,8 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				}
 			}
 			
+			 // console.log(JSON.stringify(Object.fromEntries(Object.entries(keys).map(([ key, val ]) => [ key, data[val] ])), null, '\t'));
+			
 			// auto reload, currentAmmo set earlier
 			if(cheat.player && !cheat.player[cheat.vars.ammos][cheat.player[cheat.vars.weaponIndex]] && config.aim.auto_reload)data[keys.reload] = 1;
 			
@@ -319,15 +321,23 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 					rot = {
 						x: cheat.round(Math.max(-Math.PI / 2, Math.min(Math.PI / 2, xv )) % (Math.PI * 2), 3) || 0,
 						y: cheat.round(yDire % (Math.PI * 2), 3) || 0,
-					};
+					},
+					do_aim,
+					shot;
 				
 				// if fully aimed or weapon cant even be aimed or weapon is melee and nearby, shoot
 				if(config.aim.status == 'silent' && cheat.player[add].aiming)(cheat.player[cheat.vars.ammos][cheat.player[cheat.vars.weaponIndex]] || cheat.player.weapon.ammo == null) ? data[keys.shoot] = 1 : data[keys.reload] = 1;
 				
+				do_aim = config.aim.status == 'silent'
+					? data[keys.shoot] || cheat.player.weapon.melee
+					: config.aim.status == 'assist' && (cheat.controls[cheat.vars.mouseDownR] || cheat.controls.keys[cheat.controls.binds.aimKey.val]);
+				
+				shot = cheat.player.weapon.nAuto && cheat.player[cheat.vars.didShoot];
+				
 				if(config.aim.smooth)switch(config.aim.status){
 					case'assist':
 						
-						if(cheat.controls[cheat.vars.mouseDownR] || cheat.controls.keys[cheat.controls.binds.aimKey.val])cheat.moving_camera = {
+						if(do_aim)cheat.moving_camera = {
 							xD: rot.x,
 							yD: rot.y,
 						}
@@ -335,10 +345,10 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 						break
 					case'silent':
 						
-						if(cheat.player.weapon.nAuto && cheat.player[add].did_shoot)data[keys.shoot] = data[keys.scope] = 0;
+						if(shot)data[keys.shoot] = data[keys.scope] = 0;
 						else data[keys.scope] = 1;
 						
-						if(data[keys.shoot] || cheat.player.weapon.melee)cheat.moving_camera = {
+						if(do_aim)cheat.moving_camera = {
 							xD: rot.x,
 							yD: rot.y,
 						}
@@ -347,11 +357,11 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				}else switch(config.aim.status){
 					case'silent':
 						// dont shoot if weapon is on shoot cooldown
-						if(cheat.player.weapon.nAuto && cheat.player[cheat.vars.didShoot])data[keys.shoot] = data[keys.scope] = 0;
+						if(shot)data[keys.shoot] = data[keys.scope] = 0;
 						else data[keys.scope] = 1;
 						
 						// wait until we are shooting to look at enemy
-						if(!data[keys.reload] && (data[keys.shoot] || cheat.player.weapon.melee)){
+						if(do_aim){
 							data[keys.xdir] = rot.x * 1000;
 							data[keys.ydir] = rot.y * 1000;
 						}
@@ -359,7 +369,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 						break
 					case'assist':
 						
-						if(cheat.controls[cheat.vars.mouseDownR] || cheat.controls.keys[cheat.controls.binds.aimKey.val]){
+						if(do_aim){
 							cheat.controls[cheat.vars.pchObjc].rotation.x = rot.x
 							cheat.controls.object.rotation.y = rot.y
 							
@@ -411,13 +421,14 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				get max_health(){ return ent[cheat.vars.maxHealth] },
 				get pos2D(){ return ent.x != null ? cheat.wrld2scrn(ent[add].pos) : { x: 0, y: 0 } },
 				get canSee(){
-					return ent[add].active && cheat.game[cheat.vars.canSee](cheat.player, ent[add].pos.x, ent[add].pos.y, ent[add].pos.z) == null ? true : false;
-					// return ent[add].active && cheat.util.canSee(cheat.player, ent) == null ? true : false;
+					// return ent[add].active && cheat.game[cheat.vars.canSee](cheat.player, ent[add].pos.x, ent[add].pos.y, ent[add].pos.z) == null ? true : false;
+					
+					return ent[add].active && cheat.util.canSee(cheat.player, ent) == null ? true : false;
 				},
 				// cheat.util.containsPoint(cheat.world.frustum, ent[add].pos);
 				// cheat.world.frustum.containsPoint(ent[add].pos);
 				get frustum(){ return ent[add].active && cheat.util.containsPoint(cheat.world.frustum, ent[add].pos); },
-				get active(){ return ent.x != null && cheat.ctx && ent[add].obj && ent.health > 0 },
+				get active(){ return ent && ent.x != null && cheat.ctx && ent[add].obj && ent.health > 0 },
 				get enemy(){ return !ent.team || ent.team != cheat.player.team },
 				get did_shoot(){ return ent[cheat.vars.didShoot] },
 				risk: ent.isDev || ent.isMod || ent.isMapMod || ent.canGlobalKick || ent.canViewReports || ent.partnerApp || ent.canVerify || ent.canTeleport || ent.isKPDMode || ent.level >= 30,
@@ -432,7 +443,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				
 				var normal = ent[add].inview;
 				
-				ent[add].inview = cheat.hide_nametags ? false : config.esp.nametags ? true : normal;
+				ent[add].inview = cheat.hide_nametags ? false : config.esp.nametags || normal;
 			}
 		},
 		ent_visuals(ent){
@@ -748,7 +759,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			['pchObjc', /0x0,this\['(\w+)']=new \w+\['Object3D']\(\),this/, 1],
 			['aimVal', /this\['(\w+)']-=0x1\/\(this\['weapon']\['aimSpd']/, 1],
 			['crouchVal', /this\['(\w+)']\+=\w\['crouchSpd']\*\w+,0x1<=this\['\w+']/, 1],
-			['canSee', /\w+\['(\w+)']\(\w+,\w+\['x'],\w+\['y'],\w+\['z']\)\)&&/, 1],
+			// ['canSee', /\w+\['(\w+)']\(\w+,\w+\['x'],\w+\['y'],\w+\['z']\)\)&&/, 1],
 			['didShoot', /--,\w+\['(\w+)']=!0x0/, 1],
 			['ammos', /\['length'];for\(\w+=0x0;\w+<\w+\['(\w+)']\['length']/, 1],
 			['weaponIndex', /\['weaponConfig']\[\w+]\['secondary']&&\(\w+\['(\w+)']==\w+/, 1],
