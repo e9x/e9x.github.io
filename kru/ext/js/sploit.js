@@ -289,7 +289,6 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				move_dirs = { idle: -1, forward: 1, back: 5, left: 7, right: 3 },
 				target = cheat.target = cheat.find_target();
 			
-			cheat.game.config.inc_deltaMlt = 0;
 			cheat.moving_camera = false;
 			
 			// skid bhop
@@ -566,34 +565,21 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				cheat.ctr('stroke');
 			}
 		},
-		process(){ try{
+		process(){
 			if(!cheat.game)return;
 			
-			if(!cheat.game.config[cheat.syms.hooked]){
-				cheat.game.config[cheat.syms.hooked] = 1;
-				
-				var orig_delta = cheat.game.config.deltaMlt || 1;
-				Object.defineProperty(cheat.game.config, 'deltaMlt', {
-					get: _ => orig_delta + (cheat.game.config.inc_deltaMlt ? cheat.game.config.inc_deltaMlt : 0),
-					set: n => orig_delta = n,
-				});
-			}
-			
+			// arrow controls
 			cheat.controls[cheat.vars.pchObjc].rotation.x -= ui.inputs.ArrowDown ? 0.006 : 0;
 			cheat.controls[cheat.vars.pchObjc].rotation.x += ui.inputs.ArrowUp ? 0.006 : 0;
 			
 			cheat.controls.object.rotation.y -= ui.inputs.ArrowRight ? 0.00675 : 0;
 			cheat.controls.object.rotation.y += ui.inputs.ArrowLeft ? 0.00675 : 0;
 			
-			cheat.game.config.thirdPerson = config.game.thirdperson ? true : false;
-			
 			if(!cheat.controls || !cheat.world || !cheat.player)return;
 			
-			var ind, ent;
-			
 			cheat.game.players.list.forEach(cheat.ent_vals);
-		}catch(err){ cheat.err('CAUGHT:', err); }},
-		render(){ try{ // rendering tasks
+		},
+		render(){ // rendering tasks
 			if(!cheat.cas || !cheat.ctx){
 				cheat.cas = document.querySelector('#game-overlay');
 				cheat.ctx = cheat.cas ? cheat.cas.getContext('2d', { alpha: true }) : {};
@@ -752,7 +738,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			cheat.world.scene.children.forEach(cheat.obj_mat);
 			
 			cheat.game.players.list.forEach(cheat.ent_visuals);
-		}catch(err){ cheat.err(err) }},
+		},
 		find_vars: [
 			['isYou', /this\['accid'\]=0x0,this\['(\w+)'\]=\w+,this\['isPlayer'\]/, 1],
 			['inView', /&&!\w\['\w+']&&\w\['\w+'\]&&\w\['(\w+)']\){/, 1],
@@ -1083,12 +1069,6 @@ require('/libs/sploit/ui.js').then(uie => {
 			type: 'bool',
 			val_get: _ => values.config.game.auto_respawn,
 			val_set: v => values.config.game.auto_respawn = v,
-			key: 'unset',
-		},{
-			name: 'Thirdperson',
-			type: 'bool',
-			val_get: _ => values.config.game.thirdperson,
-			val_set: v => values.config.game.thirdperson = v,
 			key: 'unset',
 		}],
 	},{
