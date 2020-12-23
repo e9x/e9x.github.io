@@ -229,7 +229,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 		ctr(label, args = []){ // ctx raw
 			if(!cheat.ctx)return;
 			
-			try{ return n.Reflect.apply(n.CanvasRenderingContext2D.prototype[label], cheat.ctx, args) }catch(err){ cheat.err(err); return {} }
+			return n.Reflect.apply(n.CanvasRenderingContext2D.prototype[label], cheat.ctx, args);
 		},
 		find_match: async () => {
 			if(cheat.finding_match)return;
@@ -285,11 +285,11 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 		procInputs(data, ...args){
 			if(!cheat.controls || !cheat.player || !cheat.player[add])return;
 			
+			cheat.moving_camera = false;
+			
 			var keys = {frame: 0, delta: 1, xdir: 2, ydir: 3, moveDir: 4, shoot: 5, scope: 6, jump: 7, reload: 8, crouch: 9, weaponScroll: 10, weaponSwap: 11, moveLock: 12},
 				move_dirs = { idle: -1, forward: 1, back: 5, left: 7, right: 3 },
 				target = cheat.target = cheat.find_target();
-			
-			cheat.moving_camera = false;
 			
 			// skid bhop
 			if(config.game.bhop != 'off' && (ui.inputs.Space || config.game.bhop == 'autojump' || config.game.bhop == 'autoslide')){
@@ -301,8 +301,6 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 					cheat.controls.keys[cheat.controls.binds.crouchKey.val] = 1;
 				}
 			}
-			
-			 // console.log(JSON.stringify(Object.fromEntries(Object.entries(keys).map(([ key, val ]) => [ key, data[val] ])), null, '\t'));
 			
 			// auto reload, currentAmmo set earlier
 			if(cheat.player && !cheat.player[cheat.vars.ammos][cheat.player[cheat.vars.weaponIndex]] && config.aim.auto_reload)data[keys.reload] = 1;
