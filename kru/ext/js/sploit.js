@@ -577,6 +577,14 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			
 			cheat.game.players.list.forEach(cheat.ent_vals);
 		},
+		overlay_arr: [
+			[['#BBB', 'Player: ']],
+			[['#BBB', 'Target: ']],
+			[['#BBB', 'Hacker: ']],
+			[['#BBB', 'Aiming: ']],
+		],
+		// axis
+		v3: ['x', 'y', 'z'],
 		render(){ // rendering tasks
 			if(!cheat.cas || !cheat.ctx){
 				cheat.cas = document.querySelector('#game-overlay');
@@ -709,12 +717,15 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				cheat.ctx.textAlign = 'start';
 				cheat.ctx.lineWidth = 2.6;
 				
-				[
-					[['#BBB', 'Player: '], ['#FFF', cheat.player && cheat.player[add] && cheat.player[add].pos ? ['x', 'y', 'z'].map(axis => axis + ': ' + cheat.player[add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
-					[['#BBB', 'Target: '], ['#FFF', cheat.target && cheat.target.isActive ? cheat.target.alias + ', ' + ['x', 'y', 'z'].map(axis => axis + ': ' + cheat.target.pos[axis].toFixed(2)).join(', ') : 'N/A']],
-					[['#BBB', 'Hacker: '], [window.activeHacker ? '#0F0' : '#F00', window.activeHacker ? 'TRUE' : 'FALSE']],
-					[['#BBB', 'Aiming: '], [cheat.player && cheat.player[add] && cheat.player[add].aiming ? '#0F0' : '#F00', cheat.player && cheat.player[add] && cheat.player[add].aiming ? 'TRUE' : 'FALSE']],
-				].forEach((line, index, lines) => {
+				cheat.overlay_arr[0][1] = ['#FFF', cheat.player && cheat.player[add] && cheat.player[add].pos ? cheat.v3.map(axis => axis + ': ' + cheat.player[add].pos[axis].toFixed(2)).join(', ') : 'N/A'];
+				
+				cheat.overlay_arr[1][1] = ['#FFF', cheat.target && cheat.target[add] && cheat.target[add].active ? cheat.target.alias + ', ' + cheat.v3.map(axis => axis + ': ' + cheat.target[add].pos[axis].toFixed(2)).join(', ') : 'N/A'];
+				
+				cheat.overlay_arr[2][1] = [window.activeHacker ? '#0F0' : '#F00', window.activeHacker ? 'TRUE' : 'FALSE'];
+				
+				cheat.overlay_arr[3][1] = [cheat.player && cheat.player[add] && cheat.player[add].aiming ? '#0F0' : '#F00', cheat.player && cheat.player[add] && cheat.player[add].aiming ? 'TRUE' : 'FALSE'];
+				
+				cheat.overlay_arr.forEach((line, index, lines) => {
 					var text_xoffset = 0;
 					
 					line.forEach(([ color, string ], text_index) => {
