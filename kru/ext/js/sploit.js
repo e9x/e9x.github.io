@@ -685,20 +685,16 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 						cheat.ctr('beginPath');
 						cheat.ctr('moveTo', [ cm.mm.offset.x + (wp / cm.mm.scale), cm.mm.offset.y + (hp / cm.mm.scale) ]);
 						
-						var scalar = -250,
-							x = 0,
-							y = 0,
-							z = 1,
-							qx = ent[add].obj.quaternion.x,
+						var qx = ent[add].obj.quaternion.x,
 							qy = ent[add].obj.quaternion.y,
 							qz = ent[add].obj.quaternion.z,
 							qw = ent[add].obj.quaternion.w, // calculate quat * vector
-							ix = qw * x + qy * z - qz * y,
-							iy = qw * y + qz * x - qx * z,
-							iz = qw * z + qx * y - qy * x,
-							iw = -qx * x - qy * y - qz * z, // calculate result * inverse quat
-							nwp = cm.dims.min.x_abs + ent[add].pos.x + (ix * qw + iw * -qx + iy * -qz - iz * -qy) * scalar,
-							nhp = cm.dims.min.z_abs + ent[add].pos.z + (iz * qw + iw * -qz + ix * -qy - iy * -qx) * scalar;
+							ix = qw * 0 + qy * 1 - qz * 0,
+							iy = qw * 0 + qz * 0 - qx * 1,
+							iz = qw * 1 + qx * 0 - qy * 0,
+							iw = -qx * 0 - qy * 0 - qz * 1, // calculate result * inverse quat
+							nwp = cm.dims.min.x_abs + ent[add].pos.x + (ix * qw + iw * -qx + iy * -qz - iz * -qy) * -250,
+							nhp = cm.dims.min.z_abs + ent[add].pos.z + (iz * qw + iw * -qz + ix * -qy - iy * -qx) * -250;
 						
 						cheat.ctx.strokeStyle = cham_color;
 						cheat.ctx.lineWidth = 1.75;
