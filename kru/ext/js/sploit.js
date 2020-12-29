@@ -1,16 +1,11 @@
 (() => {
 
 var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res.text()).then(text => {
-		var args = {
-			exports: {},
-			module: { get exports(){ return args.exports; }, set exports(v){ return args.exports = v; }},
-			require: require,
-			process: { cwd: _ => '/' },
-		};
+		var a = {exports:{},module:{get exports(){return a.exports},set exports(v){return a.exports = v}},require:require,process: {cwd:_=>'/'}};
 		
-		Reflect.apply(new Function(Object.keys(args), text + '\n//# sourceURL=' + mod), args.module, Object.values(args));
+		Reflect.apply(new Function(Object.keys(a), text + '\n//# sourceURL=' + mod), a.module, Object.values(a));
 		
-		resolve(args.exports);
+		resolve(a.exports);
 	}).catch(reject)),
 	ui = {
 		inputs: [],
@@ -166,7 +161,8 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 		},
 		util: {
 			containsPoint(frustum, point){
-				for(var ind in frustum.planes)if(frustum.planes[ind].distanceToPoint(point) < 0)return false;
+				
+				for(var ind = 0; ind < 6; ind++)if(frustum.planes[ind].distanceToPoint(point) < 0)return false;
 				
 				return true;
 			},
@@ -179,13 +175,14 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 					ad = 1 / (d3d * Math.sin(dir - Math.PI) * Math.cos(dist_dir)),
 					ae = 1 / (d3d * Math.cos(dir - Math.PI) * Math.cos(dist_dir)),
 					af = 1 / (d3d * Math.sin(dist_dir)),
-					height = player.y + (player.height || 0) - 1.15; // 1.15 = config.cameraHeight
+					height = player.y + (player.height || 0) - 1.15, // 1.15 = config.cameraHeight
+					obj;
 				
 				// iterate through game objects
 				for(var ind in cheat.game.map.manager.objects){
-					var obj = cheat.game.map.manager.objects[ind];
+					obj = cheat.game.map.manager.objects[ind];
 					
-					if(!obj.noShoot && obj.active && (cheat.player.weapon && cheat.player.weapon.pierce && config.aim.wallbangs ? !obj.penetrable : !obj.transparent)){	
+					if(!obj.noShoot && obj.active && (cheat.player.weapon && cheat.player.weapon.pierce && config.aim.wallbangs ? !obj.penetrable : true)){	
 
 						var in_rect = cheat.util.lineInRect(player.x, player.z, height, ad, ae, af, obj.x - Math.max(0, obj.width - offset), obj.z - Math.max(0, obj.length - offset), obj.y - Math.max(0, obj.height - offset), obj.x + Math.max(0, obj.width - offset), obj.z + Math.max(0, obj.length - offset), obj.y + Math.max(0, obj.height - offset));
 						
@@ -198,7 +195,6 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 					var al = cheat.game.map.terrain.raycast(player.x, -player.z, height, 1 / ad, -1 / ae, 1 / af);
 					if(al)return cheat.util.getD3D(player.x, player.y, player.z, al.x, al.z, -al.y);
 				}
-				return null;
 			},
 			getDistance(x1, y1, x2, y2){
 				return Math.sqrt((x2 -= x1) * x2 + (y2 -= y1) * y2);
@@ -306,10 +302,9 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			if(cheat.player && !cheat.player[cheat.vars.ammos][cheat.player[cheat.vars.weaponIndex]] && config.aim.auto_reload)data[keys.reload] = 1;
 			
 			if(config.aim.status == 'triggerbot' && cheat.player[add].aiming){
-				cheat.mid = new cheat.three.Vector2(0, 0);
 				var pm = cheat.game.players.list.filter(ent => ent[add] && ent[add].obj && ent[add].enemy && ent[add].canSee && ent.health).map(ent => ent[add].obj);
 				
-				cheat.raycaster.setFromCamera(cheat.mid, cheat.world.camera), cheat.raycaster.intersectObjects(pm, true).length && (data[keys.shoot] = cheat.player[cheat.vars.didShoot] ? 0 : 1);
+				cheat.raycaster.setFromCamera({ x: 0, y: 0 }, cheat.world.camera), cheat.raycaster.intersectObjects(pm, true).length && (data[keys.shoot] = cheat.player[cheat.vars.didShoot] ? 0 : 1);
 			}else if(cheat.target && cheat.player.health && !data[keys.reload]){
 				var yVal = target.y + (target[cheat.syms.isAI] ? -(target.dat.mSize / 2) : (target.jumpBobY * cheat.gconfig.jumpVel) + 1 - target[add].crouch * 3),
 					yDire = cheat.util.getDir(cheat.player[add].pos.z, cheat.player[add].pos.x, target.z, target.x),
@@ -461,23 +456,25 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				
 				obj.material.wireframe = !!config.game.wireframe;
 				
-				if(ent[add].is_you)return;
+				if(ent[add].is_you || obj[cheat.syms.hooked])return;
 				
-				if(chams_enabled && obj.material.type != 'MeshBasicMaterial'){ // set material
-					if(!obj.orig_mat)obj.orig_mat = Object.assign(Object.create(Object.getPrototypeOf(obj.material)), obj.material);
-					
-					obj.material = cheat.materials_esp[cham_color];
-				// update color
-				}else if(chams_enabled && obj.material.type == 'MeshBasicMaterial')obj.material.color.setHex(cham_color_full)
-				// remove material
-				else if(!chams_enabled && obj.orig_mat && obj.material.type == 'MeshBasicMaterial')obj.material = obj.orig_mat
+				obj[cheat.syms.hooked] = true;
+				
+				var orig_mat = obj.material;
+				
+				n.Object.defineProperty(obj, 'material', {
+					get: _ => config.esp.status == 'chams' || config.esp.status == 'box_chams' || config.esp.status == 'full'
+						? cheat.materials_esp[ent[add].is_you ? '#FFF' : ent[add].enemy ? ent[add].risk ? '#F70' : '#F00' : '#0F0']
+						: orig_mat,
+					set: _ => orig_mat = _,
+				});
 			});
 			
 			// box ESP
 			if(config.esp.status == 'box' || config.esp.status == 'box_chams' || config.esp.status == 'full'){
 				cheat.ctx.strokeStyle = cham_color
 				cheat.ctx.lineWidth = 1.5;
-				cheat.ctr('strokeRect', [src_pos.x - esp_width / 2,  esp_box_y, esp_width, esp_height]);
+				cheat.ctr('strokeRect', [ src_pos.x - esp_width / 2,  esp_box_y, esp_width, esp_height ]);
 			}
 			
 			// health bar, red - yellow - green gradient
@@ -500,9 +497,11 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				// inside of it
 				cheat.ctr('fillRect', box_ps);
 				
+				box_ps[3] = (hp_perc / 100) * esp_height;
+				
 				// colored part
 				cheat.ctx.fillStyle = hp_grad
-				cheat.ctr('fillRect', [box_ps[0], box_ps[1], box_ps[2], (hp_perc / 100) * esp_height]);
+				cheat.ctr('fillRect', box_ps);
 			}
 			
 			// full ESP
@@ -515,8 +514,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 					player_dist = cheat.player[add].pos.distanceTo(ent[add].pos),
 					text_x = src_pos_crouch.x + 12 + (esp_width / 2),
 					text_y = src_pos.y - esp_height,
-					yoffset = 0,
-					font_size = 11 - (player_dist * 0.005);
+					font_size = ~~(11 - (player_dist * 0.005));
 				
 				cheat.ctx.textAlign = 'middle';
 				cheat.ctx.font = 'Bold ' + font_size + 'px Tahoma';
@@ -539,15 +537,15 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 						xoffset = 0;
 					
 					texts.forEach(([ color, text ]) => {
+						var text_args = [ text, text_x + xoffset, text_y + text_index * (font_size + 2) ];
+						
 						cheat.ctx.fillStyle = color;
 						
-						cheat.ctr('strokeText', [text, text_x + xoffset, text_y + yoffset]);
-						cheat.ctr('fillText', [text, text_x + xoffset, text_y + yoffset]);
+						cheat.ctr('strokeText', text_args);
+						cheat.ctr('fillText', text_args);
 						
 						xoffset += cheat.ctr('measureText', [ text ]).width + 2;
 					});
-					
-					yoffset += font_size + 2;
 				});
 			}
 			
@@ -1163,7 +1161,7 @@ require('/libs/sploit/ui.js').then(uie => {
 			type: 'function_inline',
 			key: 'unset',
 			val(){
-				location.href = 'https://vibedivide.github.io/';
+				location.href = 'https://e9x.github.io/kru/inv/';
 			},
 		},{
 			name: 'Reset settings',
