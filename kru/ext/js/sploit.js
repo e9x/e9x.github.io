@@ -410,6 +410,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				get crouch(){ return ent[cheat.vars.crouchVal] },
 				get obj(){ return ent && ent.lowerBody && ent.lowerBody.parent && ent.lowerBody.parent ? ent.lowerBody.parent.parent : null },
 				// [cheat.vars.objInstances] },
+				get health(){ return ent.health; },
 				get max_health(){ return ent[cheat.vars.maxHealth] },
 				get pos2D(){ return ent.x != null ? cheat.wrld2scrn(ent[add].pos) : { x: 0, y: 0 } },
 				get canSee(){
