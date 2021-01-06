@@ -28,6 +28,8 @@ modify package.json build options as needed and run the build batch file like su
 
 [game versions](https://mega.nz/folder/eE9ghBzS#nw_TzAoWnK9Cz5Sry-lECw)
 
+[latest game versions](https://cli.sys32.dev/data/)
+
 all archived versions uploaded as of 12/10/2020
 
 [scrape game.js](https://mega.nz/file/rI8iiLrS#PNmS1IR_X5ZMt2P1uNjaz6r5uNtGSNgCFYWDmb2UxSA) pasting the script in devtools on https://krunker.io/ should download the current game code
@@ -44,3 +46,20 @@ original leak was all bundled together with webpack
 [exposed vars](https://mega.nz/file/vJF0XDwa#1fjDUjWyBmtwUU-dN28A1PQ37u9HCDFFz2NTlqm1Ab0) where properties such as canSee and canBSeen remain
 
 [reference](https://mega.nz/file/uEVmALhZ#Vlb6A5hR8IotmKXNZ6MjBIkBoCaa3wZkBj0552ihE7Y) if you are comparing the two
+
+### figuring out the .vries file
+
+viewing the network tab of devtools on krunker.io, you will notice a .vries file
+
+as shown by the games source, the first character is always `!` suggesting that the source is using an xor key
+
+looking in the game.wasm file you will find something along the lines of this
+
+```js
+fetch(url, config).then(res => res.arrayBuffer()).then(function(buffer) { resolve(Array.from(new Uint8Array(buffer)).map(x=>String.fromCharCode(x^85)).join('')) })
+```
+
+the wasm calls a js function to fetch the .vries (url param) then the js function will un-xor it
+
+seeing as the code does it by ^ 85 and the first character of the un-xored vries is !
+you can use ! to determine the xor key if you dont feel like digging into the wasm

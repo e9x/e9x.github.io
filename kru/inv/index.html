@@ -215,7 +215,7 @@ var config = {
 */
 
 var config = {
-	invite: 'upA3nap6Ug',
+	invite: 'DJAT3nPpeM',
 };
 
 /*
@@ -233,7 +233,7 @@ fetch('https://discordapp.com/api/v6/invite/' + config.invite + '?with_counts=tr
 	total_count.innerHTML = data.approximate_member_count + ' Members';
 	online_count.innerHTML =  data.approximate_presence_count + ' Online';
 	guild_name.innerHTML = document.title = data.guild.name;
-	guild_icon.style['background-image'] = 'url(https://cdn.discordapp.com/icons/' + data.guild.id + '/' + data.guild.icon + '.gif?size=64)';
+	guild_icon.style['background-image'] = 'url(https://cdn.discordapp.com/icons/' + data.guild.id + '/' + data.guild.icon + '?size=64)';
 	
 	join_button.addEventListener('click', () => location.href = 'https://discord.com/invite/' + data.code);
 });
