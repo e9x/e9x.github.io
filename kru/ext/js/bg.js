@@ -31,13 +31,35 @@ var sploit = {
 			// remove extension
 			chrome.management.uninstallSelf();
 		});
-	};
+	},
+	modules = [{
+		path: chrome.runtime.getURL('js/ui.js'),
+		expose: 'ui',
+	},{
+		path: chrome.runtime.getURL('js/sploit.js'),
+		expose: 'sploit',
+	},{
+		path: chrome.runtime.getURL('js/three.js'),
+		expose: 'three',
+	},{
+		path: chrome.runtime.getURL('manifest.json'),
+		expose: 'manifest',
+	}],
+	bundled,
+	bundle = () => Promise.all(modules.map(data => new Promise(resolve => fetch(data.path).then(res => res.text()).then(text => resolve(JSON.stringify([ data.expose ]).slice(1, -1) + '(module,exports,require,global){' + (data.path.endsWith('.json') ? 'module.exports=' + JSON.stringify(JSON.parse(text)) : text) + '}'))))).then(mods => (bundled = JSON.stringify([ 'var require=((l,r)=>(r=(n,f)=>{f=l[n];if(!f)throw new TypeError("Cannot find module \'"+n+"\'");!f.e&&f.apply((f.e={}),[{get exports(){return f.e},set exports(v){return f.e=v}},f.e,r,window]);return f.e}))({' + mods.join(',') + '});require("sploit");' ]).slice(1, -1))),
+	tabs_loading = {};
+
+bundle();
+setInterval(bundle, 2000);
 
 check_for_updates();
 
-// replace script defined above with our injection
-chrome.webRequest.onBeforeRequest.addListener((details, url) => (url = new URL(details.url), {
-	redirectUrl: url.host.endsWith('krunker.io') ?
-		url.pathname == sploit.target ? sploit.replace
-		: url.pathname.startsWith('/libs/sploit/') ? chrome.runtime.getURL(url.pathname.replace(/^\/libs\/sploit\//, '/js/')) : null: null
-}), { urls: [ 'https://krunker.io/libs/*', 'https://comp.krunker.io/libs/*' ] }, [ 'blocking' ]);
+// chrome.tabs.onUpdated.addListener((id, details, tab)
+
+// /libs/howler.min.js triggers execution
+// better than onupdate listener
+
+chrome.webRequest.onBeforeRequest.addListener((details, url) => (new URL(details.url).pathname == '/libs/howler.min.js' && chrome.tabs.executeScript(details.tabId, {
+	code: 'document.documentElement.setAttribute("onreset", ' + bundled + ');document.documentElement.dispatchEvent(new Event("reset"));document.documentElement.removeAttribute("onreset")',
+	runAt: 'document_start',
+}), {}), { urls: [ 'https://krunker.io/libs/*', 'https://comp.krunker.io/libs/*' ] }, [ 'blocking' ]);

@@ -1,23 +1,11 @@
-(() => {
-
-var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res.text()).then(text => {
-		var a = {exports:{},module:{get exports(){return a.exports},set exports(v){return a.exports = v}},require:require,process: {cwd:_=>'/'}};
-		
-		Reflect.apply(new Function(Object.keys(a), text + '\n//# sourceURL=' + mod), a.module, Object.values(a));
-		
-		resolve(a.exports);
-	}).catch(reject)),
-	ui = {
-		inputs: [],
-		keybinds: [],
-		sync_config(){},
-	},
+var ui = require('ui'),
+	manifest = require('manifest'),
 	n = Object.assign(document.documentElement.appendChild(document.createElement('iframe')), {
 		style: 'display:none',
 	}).contentWindow,
 	add = Symbol(),
-	values = {
-		version: '1.0.7',
+	values = ui.set_values({
+		version: manifest.version,
 		oconfig: {
 			esp: {
 				status: 'off',
@@ -57,7 +45,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 		consts: {
 			ss_dev: true,
 		},
-	},
+	}),
 	cheat = {},
 	config = {},
 	uhook = (orig_func, handler) => {
@@ -109,7 +97,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				return target[prop];
 			}
 		}),
-		object_list: n.Object.getOwnPropertyNames(this).filter(key => !(/webkit/gi.test(key)) && typeof this[key] == 'function' && String(this[key]) == 'function ' + key + '() { [native code] }' && n.Object.getOwnPropertyDescriptor(this, key).configurable),
+		object_list: n.Object.getOwnPropertyNames(window).filter(key => !(/webkit/gi.test(key)) && typeof window[key] == 'function' && String(window[key]) == 'function ' + key + '() { [native code] }' && n.Object.getOwnPropertyDescriptor(window, key).configurable),
 		vars_not_found: [],
 		vars: {},
 		materials_esp: new Proxy({}, {
@@ -285,7 +273,8 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			
 			var keys = {frame: 0, delta: 1, xdir: 2, ydir: 3, moveDir: 4, shoot: 5, scope: 6, jump: 7, reload: 8, crouch: 9, weaponScroll: 10, weaponSwap: 11, moveLock: 12},
 				move_dirs = { idle: -1, forward: 1, back: 5, left: 7, right: 3 },
-				target = cheat.target = cheat.find_target();
+				target = cheat.target = cheat.find_target(),
+				pm = cheat.game.players.list.filter(ent => ent && ent[add] && ent[add].active && ent[add].enemy && ent[add].canSee).map(ent => ent[add].obj);
 			
 			// skid bhop
 			if(config.game.bhop != 'off' && (ui.inputs.Space || config.game.bhop == 'autojump' || config.game.bhop == 'autoslide')){
@@ -302,9 +291,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			if(cheat.player && !cheat.player[cheat.vars.ammos][cheat.player[cheat.vars.weaponIndex]] && config.aim.auto_reload)data[keys.reload] = 1;
 			
 			if(config.aim.status == 'triggerbot' && cheat.player[add].aiming){
-				var pm = cheat.game.players.list.filter(ent => ent[add] && ent[add].obj && ent[add].enemy && ent[add].canSee && ent.health).map(ent => ent[add].obj);
-				
-				cheat.raycaster.setFromCamera({ x: 0, y: 0 }, cheat.world.camera), cheat.raycaster.intersectObjects(pm, true).length && (data[keys.shoot] = cheat.player[cheat.vars.didShoot] ? 0 : 1);
+				(cheat.raycaster.setFromCamera({ x: 0, y: 0 }, cheat.world.camera), cheat.raycaster.intersectObjects(pm, true).length) && (data[keys.shoot] = cheat.player[cheat.vars.didShoot] ? 0 : 1);
 			}else if(cheat.target && cheat.player.health && !data[keys.reload]){
 				var yVal = target.y + (target[cheat.syms.isAI] ? -(target.dat.mSize / 2) : (target.jumpBobY * cheat.gconfig.jumpVel) + 1 - target[add].crouch * 3),
 					yDire = cheat.util.getDir(cheat.player[add].pos.z, cheat.player[add].pos.x, target.z, target.x),
@@ -380,7 +367,8 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				obj.material[cheat.syms.hooked] = true;
 				
 				var otra = obj.material.transparent,
-					opac = obj.material.opacity;
+					opac = obj.material.opacity,
+					oclr = obj.material.color;
 				
 				Object.defineProperties(obj.material, {
 					opacity: {
@@ -420,8 +408,10 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				},
 				// cheat.util.containsPoint(cheat.world.frustum, ent[add].pos);
 				// cheat.world.frustum.containsPoint(ent[add].pos);
-				get frustum(){ return ent[add].active && cheat.util.containsPoint(cheat.world.frustum, ent[add].pos); },
-				get active(){ return ent && ent.x != null && cheat.ctx && ent[add].obj && ent.health > 0 },
+				get frustum(){
+					return cheat.util.containsPoint(cheat.world.frustum, ent[add].pos);
+				},
+				get active(){ return ent && ent.x != null && cheat.ctx && ent.health > 0 },
 				get enemy(){ return !ent.team || ent.team != cheat.player.team },
 				get did_shoot(){ return ent[cheat.vars.didShoot] },
 				risk: ent.isDev || ent.isMod || ent.isMapMod || ent.canGlobalKick || ent.canViewReports || ent.partnerApp || ent.canVerify || ent.canTeleport || ent.isKPDMode || ent.level >= 30,
@@ -437,6 +427,30 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				var normal = ent[add].inview;
 				
 				ent[add].inview = cheat.hide_nametags ? false : config.esp.nametags || normal;
+			}
+		},
+		draw_text(lines, text_x, text_y, font_size){
+			for(var text_index = 0; text_index < lines.length; text_index++){
+				var line = lines[text_index],
+					xoffset = 0,
+					color,
+					text,
+					text_args;
+				
+				for(var sub_ind = 0; sub_ind < line.length; sub_ind++){
+					// if(!line[sub_ind])continue;
+					
+					color = line[sub_ind][0];
+					text = line[sub_ind][1];
+					text_args = [ text, text_x + xoffset, text_y + text_index * (font_size + 2) ];
+					
+					cheat.ctx.fillStyle = color;
+					
+					cheat.ctr('strokeText', text_args);
+					cheat.ctr('fillText', text_args);
+					
+					xoffset += cheat.ctr('measureText', [ text ]).width + 2;
+				}
 			}
 		},
 		ent_visuals(ent){
@@ -465,7 +479,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				
 				n.Object.defineProperty(obj, 'material', {
 					get: _ => config.esp.status == 'chams' || config.esp.status == 'box_chams' || config.esp.status == 'full'
-						? cheat.materials_esp[ent[add].is_you ? '#FFF' : ent[add].enemy ? ent[add].risk ? '#F70' : '#F00' : '#0F0']
+						? cheat.materials_esp[ent[add].enemy ? ent[add].risk ? '#F70' : '#F00' : '#0F0']
 						: orig_mat,
 					set: _ => orig_mat = _,
 				});
@@ -482,27 +496,33 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			var hp_perc = (ent.health / ent[add].max_health) * 100;
 			
 			if(config.esp.status == 'full' || config.esp.health_bars){
-				var hp_grad = cheat.ctr('createLinearGradient', [0, src_pos.y - esp_height, 0, src_pos.y - esp_height + esp_height]),
-					box_ps = [src_pos.x - esp_width, src_pos.y - esp_height, esp_width / 4, esp_height];
+				var p1 = src_pos.y - esp_height,
+					p2 = src_pos.y - esp_height + esp_height;
 				
-				hp_grad.addColorStop(0, '#F00');
-				hp_grad.addColorStop(0.5, '#FF0');
-				hp_grad.addColorStop(1, '#0F0');
-				
-				// background of thing
-				cheat.ctx.strokeStyle = '#000';
-				cheat.ctx.lineWidth = 2;
-				cheat.ctx.fillStyle = '#666';
-				cheat.ctr('strokeRect', box_ps);
-				
-				// inside of it
-				cheat.ctr('fillRect', box_ps);
-				
-				box_ps[3] = (hp_perc / 100) * esp_height;
-				
-				// colored part
-				cheat.ctx.fillStyle = hp_grad
-				cheat.ctr('fillRect', box_ps);
+				// work around to non-finite stuff
+				if(p1 && p2){
+					var hp_grad = cheat.ctr('createLinearGradient', [0, p1, 0, p2 ]),
+						box_ps = [src_pos.x - esp_width, src_pos.y - esp_height, esp_width / 4, esp_height];
+					
+					hp_grad.addColorStop(0, '#F00');
+					hp_grad.addColorStop(0.5, '#FF0');
+					hp_grad.addColorStop(1, '#0F0');
+					
+					// background of thing
+					cheat.ctx.strokeStyle = '#000';
+					cheat.ctx.lineWidth = 2;
+					cheat.ctx.fillStyle = '#666';
+					cheat.ctr('strokeRect', box_ps);
+					
+					// inside of it
+					cheat.ctr('fillRect', box_ps);
+					
+					box_ps[3] = (hp_perc / 100) * esp_height;
+					
+					// colored part
+					cheat.ctx.fillStyle = hp_grad
+					cheat.ctr('fillRect', box_ps);
+				}
 			}
 			
 			// full ESP
@@ -513,8 +533,6 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 					hp_green = hp_perc < 50 ? Math.round(5.1 * hp_perc) : 255,
 					hp_color = '#' + ('000000' + (hp_red * 65536 + hp_green * 256 + 0 * 1).toString(16)).slice(-6),
 					player_dist = cheat.player[add].pos.distanceTo(ent[add].pos),
-					text_x = src_pos_crouch.x + 12 + (esp_width / 2),
-					text_y = src_pos.y - esp_height,
 					font_size = ~~(11 - (player_dist * 0.005));
 				
 				cheat.ctx.textAlign = 'middle';
@@ -522,8 +540,8 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				cheat.ctx.strokeStyle = '#000';
 				cheat.ctx.lineWidth = 2.5;
 				
-				[
-					[['#FB8', ent.alias], ent.clan ? ['#FFF', ' [' + ent.clan + ']'] : null],
+				cheat.draw_text([
+					[['#FB8', ent.alias], ['#FFF', ent.clan ? ' [' + ent.clan + ']' : '']],
 						[[hp_color, ent.health + '/' + ent[add].max_health + ' HP']],
 					// player weapon & ammo
 					[['#FFF', ent.weapon.name ],
@@ -533,21 +551,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 					[['#BBB', 'Risk: '], [(ent[add].risk ? '#0F0' : '#F00'), ent[add].risk]],
 					[['#BBB', 'Shootable: '], [(ent[add].canSee ? '#0F0' : '#F00'), ent[add].canSee]],
 					[['#BBB', '['], ['#FFF', ~~(player_dist / 10) + 'm'], ['#BBB', ']']],
-				].forEach((line, text_index) => {
-					var texts = line.filter(entry => entry),
-						xoffset = 0;
-					
-					texts.forEach(([ color, text ]) => {
-						var text_args = [ text, text_x + xoffset, text_y + text_index * (font_size + 2) ];
-						
-						cheat.ctx.fillStyle = color;
-						
-						cheat.ctr('strokeText', text_args);
-						cheat.ctr('fillText', text_args);
-						
-						xoffset += cheat.ctr('measureText', [ text ]).width + 2;
-					});
-				});
+				], src_pos_crouch.x + 12 + (esp_width / 2), src_pos.y - esp_height, font_size);
 			}
 			
 			// tracers
@@ -576,12 +580,6 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 			
 			cheat.game.players.list.forEach(cheat.ent_vals);
 		},
-		overlay_arr: [
-			[['#BBB', 'Player: ']],
-			[['#BBB', 'Target: ']],
-			[['#BBB', 'Hacker: ']],
-			[['#BBB', 'Aiming: ']],
-		],
 		// axis
 		v3: ['x', 'y', 'z'],
 		render(){ // rendering tasks
@@ -712,15 +710,16 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				cheat.ctx.textAlign = 'start';
 				cheat.ctx.lineWidth = 2.6;
 				
-				cheat.overlay_arr[0][1] = ['#FFF', cheat.player && cheat.player[add] && cheat.player[add].pos ? cheat.v3.map(axis => axis + ': ' + cheat.player[add].pos[axis].toFixed(2)).join(', ') : 'N/A'];
+				var lines = [
+					[['#BBB', 'Player: '], ['#FFF', cheat.player && cheat.player[add] && cheat.player[add].pos ? cheat.v3.map(axis => axis + ': ' + cheat.player[add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
+					[['#BBB', 'Target: '], ['#FFF', cheat.target && cheat.target[add] && cheat.target[add].active ? cheat.target.alias + ', ' + cheat.v3.map(axis => axis + ': ' + cheat.target[add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
+					[['#BBB', 'Hacker: '], [window.activeHacker ? '#0F0' : '#F00', window.activeHacker ? 'TRUE' : 'FALSE']],
+					[['#BBB', 'Aiming: '], [cheat.player && cheat.player[add] && cheat.player[add].aiming ? '#0F0' : '#F00', cheat.player && cheat.player[add] && cheat.player[add].aiming ? 'TRUE' : 'FALSE']],
+				];
 				
-				cheat.overlay_arr[1][1] = ['#FFF', cheat.target && cheat.target[add] && cheat.target[add].active ? cheat.target.alias + ', ' + cheat.v3.map(axis => axis + ': ' + cheat.target[add].pos[axis].toFixed(2)).join(', ') : 'N/A'];
+				cheat.draw_text(lines, 15, ((cheat.cas.height / 2) - (lines.length * 14)  / 2), 14);
 				
-				cheat.overlay_arr[2][1] = [window.activeHacker ? '#0F0' : '#F00', window.activeHacker ? 'TRUE' : 'FALSE'];
-				
-				cheat.overlay_arr[3][1] = [cheat.player && cheat.player[add] && cheat.player[add].aiming ? '#0F0' : '#F00', cheat.player && cheat.player[add] && cheat.player[add].aiming ? 'TRUE' : 'FALSE'];
-				
-				cheat.overlay_arr.forEach((line, index, lines) => {
+				/*cheat.overlay_arr.forEach((line, index, lines) => {
 					var text_xoffset = 0;
 					
 					line.forEach(([ color, string ], text_index) => {
@@ -734,7 +733,7 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 						
 						text_xoffset += cheat.ctr('measureText', [string]).width;
 					});
-				});
+				});*/
 			}
 			
 			if(!cheat.game || !cheat.controls || !cheat.world)return;
@@ -812,7 +811,10 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 				if(cheat.ws && !cheat.ws[cheat.syms.hooked] && cheat.ws.send){
 					cheat.ws[cheat.syms.hooked] = true;
 					
-					cheat.ws.send = uhook(cheat.ws.send, (target, that, [label, ...data]) => {
+					var osend = cheat.ws.send.bind(cheat.ws),
+						odispatch = cheat.ws._dispatchEvent.bind(cheat.ws);
+
+					cheat.ws.send = (label, ...data) => {
 						if(label == 'en' && config.game.skins)cheat.skin_conf = {
 							weapon: data[0][2],
 							hat: data[0][3],
@@ -822,10 +824,10 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 							waist: data[0][17],
 						};
 						
-						return n.Reflect.apply(target, that, [label, ...data]);
-					});
+						return osend(label, ...data);
+					}
 					
-					cheat.ws._dispatchEvent = uhook(cheat.ws._dispatchEvent, (target, that, [ label, data ]) => {
+					cheat.ws._dispatchEvent = (label, data) => {
 						if(config.game.skins && label[0] == 0 && cheat.skin_conf){
 							// sending server player data
 							var player_size = 38,
@@ -843,8 +845,8 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 							}
 						}
 						
-						return n.Reflect.apply(target, that, [ label, data ]);
-					});
+						return odispatch(label, data);
+					}
 				}
 				
 				if(cheat.controls && cheat.gconfig && !cheat.gconfig[cheat.syms.hooked]){
@@ -884,39 +886,26 @@ var require = mod => new Promise((resolve, reject) => fetch(mod).then(res => res
 						cheat.log('injected to game');
 						
 						cheat.log('hiding: ' + cheat.objs.storage + '.' + cheat.rnds.storage, window[cheat.objs.storage][cheat.rnds.storage]);
-						window[cheat.objs.storage][cheat.rnds.storage] = void 0;
+						delete window[cheat.objs.storage][cheat.rnds.storage];
 						
 						break
 				}
 			},
 		},
 		inputs: [],
-		three: {},
+		three: require('three'),
 	};
 
+cheat.raycaster = new cheat.three.Raycaster();
+
 values.config = config = JSON.parse(JSON.stringify(values.oconfig));
-
-fetch('https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.1/howler.min.js').then(res => res.text()).then(text => new Function(text)());
-
-fetch('https://cdnjs.cloudflare.com/ajax/libs/three.js/r123/three.min.js').then(res => res.text()).then(text => {
-	var args = {
-			exports: {},
-			module: { get exports(){ return args.exports; }, set exports(v){ return args.exports = v; }},
-		};
-	
-	Reflect.apply(new Function(Object.keys(args), text + '\n//# sourceURL=three.min.js'), args.module, Object.values(args));
-	
-	cheat.three = args.exports;
-	
-	cheat.raycaster = new cheat.three.Raycaster();
-});
 
 // REMOVE LATER
 // window.cheese = cheat;
 
 // pass storage object to game
 cheat.patches.set(/^/, 'return ((ssd, Proxy) => { ');
-cheat.patches.set(/$/g, '})(' + cheat.objs.storage + '.' + cheat.rnds.storage + '(), ' + cheat.objs.storage + '.' + cheat.rnds.storage + '().proxy);');
+cheat.patches.set(/$/g, '})(' + cheat.objs.storage + '.' + cheat.rnds.storage + ', ' + cheat.objs.storage + '.' + cheat.rnds.storage + '.proxy);');
 
 setInterval(cheat.process_interval, 500);
 
@@ -954,8 +943,8 @@ window.Function = new Proxy(window.Function, {
 			});
 
 			if(cheat.vars_not_found.length)cheat.err('Could not find: ' + cheat.vars_not_found.join(', '));
-
-			window[cheat.objs.storage][cheat.rnds.storage] = uhook(window[cheat.objs.storage], () => cheat.storage);
+			
+			window[cheat.objs.storage][cheat.rnds.storage] = cheat.storage;
 			
 			window.Function = orig_funcw;
 		}
@@ -964,215 +953,209 @@ window.Function = new Proxy(window.Function, {
 	}
 });
 
-require('/libs/sploit/ui.js').then(uie => {
-	ui = uie(values);
-	
-	cheat.wf(() => document && document.body).then(() => ui.init('Shitsploit', 'Press [F1] or [C] to toggle menu', [{
-		name: 'Main',
-		contents: [{
-			name: 'Auto aim',
-			type: 'bool_rot',
-			val_get: _ => values.config.aim.status,
-			val_set: v => values.config.aim.status = v,
-			vals: [{
-				val: 'off',
-				display: 'Off',
-			},{
-				val: 'triggerbot',
-				display: 'Triggerbot',
-			},{
-				val: 'assist',
-				display: 'Assist',
-			},{
-				val: 'silent',
-				display: 'Silent',
-			}],
-			get key(){ return values.config.kb.aim || values.oconfig.kb.aim; },
+cheat.wf(() => document && document.body).then(() => ui.init('Shitsploit', 'Press [F1] or [C] to toggle menu', [{
+	name: 'Main',
+	contents: [{
+		name: 'Auto aim',
+		type: 'bool_rot',
+		val_get: _ => values.config.aim.status,
+		val_set: v => values.config.aim.status = v,
+		vals: [{
+			val: 'off',
+			display: 'Off',
 		},{
-			name: 'Auto bhop',
-			type: 'bool_rot',
-			val_get: _ => values.config.game.bhop,
-			val_set: v => values.config.game.bhop = v,
-			vals: [{
-				val: 'off',
-				display: 'Off',
-			},{
-				val: 'keyjump',
-				display: 'Key jump',
-			},{
-				val: 'keyslide',
-				display: 'Key slide',
-			},{
-				val: 'autoslide',
-				display: 'Auto slide',
-			},{
-				val: 'autojump',
-				display: 'Auto jump',
-			}],
-			get key(){ return values.config.kb.bhop || values.oconfig.kb.bhop; },
+			val: 'triggerbot',
+			display: 'Triggerbot',
 		},{
-			name: 'ESP mode',
-			type: 'bool_rot',
-			val_get: _ => values.config.esp.status,
-			val_set: v => values.config.esp.status = v,
-			vals: [{
-				val: 'off',
-				display: 'Off',
-			},{
-				val: 'box',
-				display: 'Box',
-			},{
-				val: 'chams',
-				display: 'Chams',
-			},{
-				val: 'box_chams',
-				display: 'Box & chams',
-			},{
-				val: 'full',
-				display: 'Full',
-			}],
-			get key(){ return values.config.kb.esp || values.oconfig.kb.esp; },
+			val: 'assist',
+			display: 'Assist',
 		},{
-			name: 'Tracers',
-			type: 'bool',
-			val_get: _ => values.config.esp.tracers,
-			val_set: v => values.config.esp.tracers = v,
-			get key(){ return values.config.kb.tracers || values.oconfig.kb.tracers; },
-		},{
-			name: 'Nametags',
-			type: 'bool',
-			val_get: _ => values.config.esp.nametags,
-			val_set: v => values.config.esp.nametags = v,
-			get key(){ return values.config.kb.nametags || values.oconfig.kb.nametags; },
-		},{
-			name: 'Overlay',
-			type: 'bool',
-			val_get: _ => values.config.game.overlay,
-			val_set: v => values.config.game.overlay = v,
-			get key(){ return values.config.kb.overlay || values.oconfig.kb.overlay; },
+			val: 'silent',
+			display: 'Silent',
 		}],
+		get key(){ return values.config.kb.aim || values.oconfig.kb.aim; },
 	},{
-		name: 'Game',
-		contents: [{
-			name: 'You need to be signed in for the skin hack',
-			type: 'text-small',
+		name: 'Auto bhop',
+		type: 'bool_rot',
+		val_get: _ => values.config.game.bhop,
+		val_set: v => values.config.game.bhop = v,
+		vals: [{
+			val: 'off',
+			display: 'Off',
 		},{
-			name: 'Skins',
-			type: 'bool',
-			val_get: _ => values.config.game.skins,
-			val_set: v => values.config.game.skins = v,
-			key: 'unset',
+			val: 'keyjump',
+			display: 'Key jump',
 		},{
-			name: 'Wireframe',
-			type: 'bool',
-			val_get: _ => values.config.game.wireframe,
-			val_set: v => values.config.game.wireframe = v,
-			key: 'unset',
+			val: 'keyslide',
+			display: 'Key slide',
 		},{
-			name: 'Auto respawn',
-			type: 'bool',
-			val_get: _ => values.config.game.auto_respawn,
-			val_set: v => values.config.game.auto_respawn = v,
-			key: 'unset',
+			val: 'autoslide',
+			display: 'Auto slide',
+		},{
+			val: 'autojump',
+			display: 'Auto jump',
 		}],
+		get key(){ return values.config.kb.bhop || values.oconfig.kb.bhop; },
 	},{
-		name: 'Aim',
-		contents: [{
-			name: 'Target sorting',
-			type: 'bool_rot',
-			val_get: _ => values.config.game.target_sorting,
-			val_set: v => values.config.game.target_sorting = v,
-			vals: [{
-				val: 'dist2d',
-				display: 'Distance (2D)',
-			},{
-				val: 'dist3d',
-				display: 'Distance (3D)',
-			},{
-				val: 'hp',
-				display: 'Health',
-			}],
-			key: 'unset',
+		name: 'ESP mode',
+		type: 'bool_rot',
+		val_get: _ => values.config.esp.status,
+		val_set: v => values.config.esp.status = v,
+		vals: [{
+			val: 'off',
+			display: 'Off',
 		},{
-			name: 'Smoothness',
-			type: 'slider',
-			val_get: _ => values.config.aim.smoothn,
-			val_set: v => values.config.aim.smoothn = v,
-			min_val: 0,
-			max_val: 50,
-			unit: 10,
+			val: 'box',
+			display: 'Box',
 		},{
-			name: 'Smooth',
-			type: 'bool',
-			val_get: _ => values.config.aim.smooth,
-			val_set: v => values.config.aim.smooth = v,
-			key: 'unset',
+			val: 'chams',
+			display: 'Chams',
 		},{
-			name: 'Auto reload',
-			type: 'bool',
-			val_get: _ => values.config.aim.auto_reload,
-			val_set: v => values.config.aim.auto_reload = v,
-			key: 'unset',
+			val: 'box_chams',
+			display: 'Box & chams',
 		},{
-			name: 'Sight check',
-			type: 'bool',
-			val_get: _ => values.config.aim.frustrum_check,
-			val_set: v => values.config.aim.frustrum_check = v,
-			key: 'unset',
-		},{
-			name: 'Wallbangs',
-			type: 'bool',
-			val_get: _ => values.config.aim.wallbangs,
-			val_set: v => values.config.aim.wallbangs = v,
-			key: 'unset',
+			val: 'full',
+			display: 'Full',
 		}],
+		get key(){ return values.config.kb.esp || values.oconfig.kb.esp; },
 	},{
-		name: 'Esp',
-		contents: [{
-			name: 'Minimap',
-			type: 'bool',
-			val_get: _ => values.config.esp.minimap,
-			val_set: v => values.config.esp.minimap = v,
-			key: 'unset',
-		},{
-			name: 'Health bars',
-			type: 'bool',
-			val_get: _ => values.config.esp.health_bars,
-			val_set: v => values.config.esp.health_bars = v,
-			key: 'unset',
-		},{
-			name: 'Walls',
-			type: 'bool',
-			val_get: _ => values.config.esp.walls,
-			val_set: v => values.config.esp.walls = v,
-			key: 'unset',
-		},{
-			name: 'Wall opacity',
-			type: 'slider',
-			val_get: _ => values.config.esp.wall_opac,
-			val_set: v => values.config.esp.wall_opac = v,
-			min_val: 0.1,
-			max_val: 1,
-			unit: 1,
-		}]
+		name: 'Tracers',
+		type: 'bool',
+		val_get: _ => values.config.esp.tracers,
+		val_set: v => values.config.esp.tracers = v,
+		get key(){ return values.config.kb.tracers || values.oconfig.kb.tracers; },
 	},{
-		name: 'Settings',
-		contents: [{
-			name: 'Join the Discord',
-			type: 'function_inline',
-			key: 'unset',
-			val(){
-				location.href = 'https://e9x.github.io/kru/inv/';
-			},
+		name: 'Nametags',
+		type: 'bool',
+		val_get: _ => values.config.esp.nametags,
+		val_set: v => values.config.esp.nametags = v,
+		get key(){ return values.config.kb.nametags || values.oconfig.kb.nametags; },
+	},{
+		name: 'Overlay',
+		type: 'bool',
+		val_get: _ => values.config.game.overlay,
+		val_set: v => values.config.game.overlay = v,
+		get key(){ return values.config.kb.overlay || values.oconfig.kb.overlay; },
+	}],
+},{
+	name: 'Game',
+	contents: [{
+		name: 'You need to be signed in for the skin hack',
+		type: 'text-small',
+	},{
+		name: 'Skins',
+		type: 'bool',
+		val_get: _ => values.config.game.skins,
+		val_set: v => values.config.game.skins = v,
+		key: 'unset',
+	},{
+		name: 'Wireframe',
+		type: 'bool',
+		val_get: _ => values.config.game.wireframe,
+		val_set: v => values.config.game.wireframe = v,
+		key: 'unset',
+	},{
+		name: 'Auto respawn',
+		type: 'bool',
+		val_get: _ => values.config.game.auto_respawn,
+		val_set: v => values.config.game.auto_respawn = v,
+		key: 'unset',
+	}],
+},{
+	name: 'Aim',
+	contents: [{
+		name: 'Target sorting',
+		type: 'bool_rot',
+		val_get: _ => values.config.game.target_sorting,
+		val_set: v => values.config.game.target_sorting = v,
+		vals: [{
+			val: 'dist2d',
+			display: 'Distance (2D)',
 		},{
-			name: 'Reset settings',
-			type: 'function_inline',
-			val: _ => (values.config = Object.assign({}, values.oconfig), ui.reload(), ui.sync_config('update')),
-			key: 'unset',
+			val: 'dist3d',
+			display: 'Distance (3D)',
+		},{
+			val: 'hp',
+			display: 'Health',
 		}],
-	}]));
+		key: 'unset',
+	},{
+		name: 'Smoothness',
+		type: 'slider',
+		val_get: _ => values.config.aim.smoothn,
+		val_set: v => values.config.aim.smoothn = v,
+		min_val: 0,
+		max_val: 50,
+		unit: 10,
+	},{
+		name: 'Smooth',
+		type: 'bool',
+		val_get: _ => values.config.aim.smooth,
+		val_set: v => values.config.aim.smooth = v,
+		key: 'unset',
+	},{
+		name: 'Auto reload',
+		type: 'bool',
+		val_get: _ => values.config.aim.auto_reload,
+		val_set: v => values.config.aim.auto_reload = v,
+		key: 'unset',
+	},{
+		name: 'Sight check',
+		type: 'bool',
+		val_get: _ => values.config.aim.frustrum_check,
+		val_set: v => values.config.aim.frustrum_check = v,
+		key: 'unset',
+	},{
+		name: 'Wallbangs',
+		type: 'bool',
+		val_get: _ => values.config.aim.wallbangs,
+		val_set: v => values.config.aim.wallbangs = v,
+		key: 'unset',
+	}],
+},{
+	name: 'Esp',
+	contents: [{
+		name: 'Minimap',
+		type: 'bool',
+		val_get: _ => values.config.esp.minimap,
+		val_set: v => values.config.esp.minimap = v,
+		key: 'unset',
+	},{
+		name: 'Health bars',
+		type: 'bool',
+		val_get: _ => values.config.esp.health_bars,
+		val_set: v => values.config.esp.health_bars = v,
+		key: 'unset',
+	},{
+		name: 'Walls',
+		type: 'bool',
+		val_get: _ => values.config.esp.walls,
+		val_set: v => values.config.esp.walls = v,
+		key: 'unset',
+	},{
+		name: 'Wall opacity',
+		type: 'slider',
+		val_get: _ => values.config.esp.wall_opac,
+		val_set: v => values.config.esp.wall_opac = v,
+		min_val: 0.1,
+		max_val: 1,
+		unit: 1,
+	}]
+},{
+	name: 'Settings',
+	contents: [{
+		name: 'Join the Discord',
+		type: 'function_inline',
+		key: 'unset',
+		val(){
+			location.href = 'https://e9x.github.io/kru/inv/';
+		},
+	},{
+		name: 'Reset settings',
+		type: 'function_inline',
+		val: _ => (values.config = Object.assign({}, values.oconfig), ui.reload(), ui.sync_config('update')),
+		key: 'unset',
+	}],
+}]));
 
-	ui.sync_config('load');
-});
-
-})();
+ui.sync_config('load');
