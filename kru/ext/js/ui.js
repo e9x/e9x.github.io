@@ -6,7 +6,7 @@ exports.keybinds = [];
 exports.inputs = [];
 exports.control_updates = [];
 exports.visible = true;
-exports.create_obj_url = window.URL.createObjectURL.bind(window.URL);
+exports.create_obj_url = parent.URL.createObjectURL.bind(parent.URL);
 
 exports.config_key = 'krk_custSops';
 
@@ -296,12 +296,12 @@ ${div} {
 	
 	customElements.define(div, class extends HTMLDivElement {}, { extends: 'div' });
 	
-	var con = exports.add_ele(div, document.body, { className: css_class('con') }),
+	var con = exports.add_ele(div, parent.document.body, { className: css_class('con') }),
 		titlebar = exports.add_ele(div, con, { innerHTML: exports.chr_ins(title), className: css_class('bar') + ' ' + css_class('bar-top') }),
 		main_border = exports.add_ele(div, con, { className: css_class('main-border') }),
 		cons = exports.add_ele(div, main_border, { className: css_class('cons') }),
 		sidebar_con = exports.add_ele(div, cons, { className: css_class('sidebar-con' ) }),
-		style = exports.add_ele('link', document.head, { rel: 'stylesheet', href: exports.create_obj_url(new Blob([ base_css ], { type: 'text/css' })) }),
+		style = exports.add_ele('link', parent.document.head, { rel: 'stylesheet', href: exports.create_obj_url(new Blob([ base_css ], { type: 'text/css' })) }),
 		tab_nodes = [],
 		process_controls = (control, tab, tab_button, tab_ele) => {
 			if(control.type == 'nested_menu'){
@@ -465,9 +465,9 @@ ${div} {
 						update_slider(event);
 					});
 					
-					window.addEventListener('mouseup', _=> movement.sd.held = false );
+					parent.addEventListener('mouseup', _=> movement.sd.held = false );
 					
-					window.addEventListener('mousemove', event=> update_slider(event));
+					parent.addEventListener('mousemove', event=> update_slider(event));
 					
 					break
 				case'bool_rot':
@@ -492,7 +492,7 @@ ${div} {
 			});
 		},
 		movement = { tb:{ value: false } },
-		align_con = () => (con.style.top = (window.innerHeight / 2) - (con.getBoundingClientRect().height / 2) + 'px', con.style.left = '20px');
+		align_con = () => (con.style.top = (parent.innerHeight / 2) - (con.getBoundingClientRect().height / 2) + 'px', con.style.left = '20px');
 	
 	titlebar.addEventListener('mousedown', event => movement.tb = {
 		value: true,
@@ -500,20 +500,20 @@ ${div} {
 		y: event.y - Number(con.style.top.replace(/px$/, '')),
 	});
 
-	document.addEventListener('mouseup', _=> movement.tb.value = false);
+	parent.document.addEventListener('mouseup', _=> movement.tb.value = false);
 
-	document.addEventListener('mousemove', event => {
+	parent.document.addEventListener('mousemove', event => {
 		if(movement.tb.value){
-			var x_inside = event.x - movement.tb.x + con.offsetWidth < window.innerWidth,
-				y_inside = event.y - movement.tb.y + con.offsetHeight < window.innerHeight;
+			var x_inside = event.x - movement.tb.x + con.offsetWidth < parent.innerWidth,
+				y_inside = event.y - movement.tb.y + con.offsetHeight < parent.innerHeight;
 			// check if element will be outside of window
 			if(x_inside && event.x - movement.tb.x >= 0)con.style.left = event.x - movement.tb.x + 'px'
 			if(y_inside && event.y - movement.tb.y >= 0)con.style.top = event.y - movement.tb.y + 'px'
 		}
 	});
 	
-	window.addEventListener('keydown', event => {
-		if(document.activeElement && document.activeElement.tagName == 'INPUT')return;
+	parent.addEventListener('keydown', event => {
+		if(parent.document.activeElement && parent.document.activeElement.tagName == 'INPUT')return;
 		
 		exports.inputs[event.code] = true;
 		
@@ -526,7 +526,7 @@ ${div} {
 		keybind.interact(event); // call the keybind callback
 	});
 	
-	window.addEventListener('keyup', event => {
+	parent.addEventListener('keyup', event => {
 		exports.inputs[event.code] = false;
 	});
 	
@@ -571,7 +571,7 @@ ${div} {
 	exports.add_ele(div, titlebar, { className: css_class('ver'), innerHTML: exports.chr_ins('v' + values.version) });
 	
 	// clear all inputs when window is not focused
-	window.addEventListener('blur', () => exports.inputs = []);
+	parent.addEventListener('blur', () => exports.inputs = []);
 	
 	setTimeout(align_con);
 };

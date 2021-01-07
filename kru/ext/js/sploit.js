@@ -1,8 +1,5 @@
 var ui = require('ui'),
 	manifest = require('manifest'),
-	n = Object.assign(document.documentElement.appendChild(document.createElement('iframe')), {
-		style: 'display:none',
-	}).contentWindow,
 	add = Symbol(),
 	values = ui.set_values({
 		version: manifest.version,
@@ -49,11 +46,11 @@ var ui = require('ui'),
 	cheat = {},
 	config = {},
 	uhook = (orig_func, handler) => {
-		var func = n.Object.defineProperties(function(...args){ return n.Reflect.apply(handler, this, [orig_func, this, args]) }, n.Object.getOwnPropertyDescriptors(orig_func));
+		var func = Object.defineProperties(function(...args){ return Reflect.apply(handler, this, [orig_func, this, args]) }, Object.getOwnPropertyDescriptors(orig_func));
 		
-		n.Reflect.defineProperty(func, 'length', { value: orig_func.length, configurable: true, enumerable: false, writable: false });
-		n.Reflect.defineProperty(func, 'name', { value: orig_func.name, configurable: true, enumerable: false, writable: false });
-		func.toString = n.Reflect.apply(n.Function.prototype.bind, orig_func.toString, [orig_func]);
+		Reflect.defineProperty(func, 'length', { value: orig_func.length, configurable: true, enumerable: false, writable: false });
+		Reflect.defineProperty(func, 'name', { value: orig_func.name, configurable: true, enumerable: false, writable: false });
+		func.toString = Reflect.apply(Function.prototype.bind, orig_func.toString, [orig_func]);
 		func.toString.toString = orig_func.toString.toString;
 		
 		// function prototype usually undefined or void
@@ -76,28 +73,28 @@ var ui = require('ui'),
 				if(interval)return clearInterval(interval), reject('timeout');
 			}, timeout);
 		}),
-		syms: new n.Proxy({}, {
+		syms: new Proxy({}, {
 			get(target, prop){
 				if(!target[prop])target[prop] = Symbol();
 				
 				return target[prop];
 			}
 		}),
-		rnds: new n.Proxy({}, {
+		rnds: new Proxy({}, {
 			get(target, prop){
 				if(!target[prop])target[prop] = [...Array(16)].map(() => Math.random().toString(36)[2]).join('').replace(/(\d|\s)/, 'V').toLowerCase().substr(0, 6);
 				
 				return target[prop];
 			}
 		}),
-		objs: new n.Proxy({}, {
+		objs: new Proxy({}, {
 			get(target, prop){
 				if(!target[prop])target[prop] = cheat.object_list[~~(Math.random() * cheat.object_list.length)];
 				
 				return target[prop];
 			}
 		}),
-		object_list: n.Object.getOwnPropertyNames(window).filter(key => !(/webkit/gi.test(key)) && typeof window[key] == 'function' && String(window[key]) == 'function ' + key + '() { [native code] }' && n.Object.getOwnPropertyDescriptor(window, key).configurable),
+		object_list: Object.getOwnPropertyNames(window).filter(key => !(/webkit/gi.test(key)) && typeof window[key] == 'function' && String(window[key]) == 'function ' + key + '() { [native code] }' && Object.getOwnPropertyDescriptor(window, key).configurable),
 		vars_not_found: [],
 		vars: {},
 		materials_esp: new Proxy({}, {
@@ -121,7 +118,6 @@ var ui = require('ui'),
 			SIN: 'sgp',
 			NY: 'us-nj',
 		},
-		key_press: (keycode, keyname, keycode2, keyud) => document.dispatchEvent(new KeyboardEvent(keyud,{altKey:false,bubbles:true,cancelBubble:false,cancelable:true,charCode:0,code:keyname,composed:true,ctrlKey:false,currentTarget:null,defaultPrevented:true,detail:0,eventPhase:0,explicitOriginalTarget:document.body,isComposing:false,isTrusted:true,key:keyname,keyCode:keycode,layerX:0,layerY:0,location:0,metaKey:false,originalTarget:document.body,rangeOffset:0,rangeParent:null,repeat:false,returnValue:false,shiftKey:false,srcElement:document.body,target:document.body,timeStamp:Date.now(),type:keyud,view:parent,which:keycode})),
 		log(...args){
 			if(values.consts.ss_dev)console.log('%cShitsploit', 'background: #27F; color: white; border-radius: 3px; padding: 3px 2px; font-weight: 600', ...args);
 			
@@ -213,7 +209,7 @@ var ui = require('ui'),
 		ctr(label, args = []){ // ctx raw
 			if(!cheat.ctx)return;
 			
-			return n.Reflect.apply(n.CanvasRenderingContext2D.prototype[label], cheat.ctx, args);
+			return Reflect.apply(CanvasRenderingContext2D.prototype[label], cheat.ctx, args);
 		},
 		find_match: async () => {
 			if(cheat.finding_match)return;
@@ -236,16 +232,16 @@ var ui = require('ui'),
 			location.href = 'https://krunker.io/?game=' +  new_match.id;
 		},
 		process_interval(){ // run every 1000 ms
-			if(!document.querySelector('#instructions'))return;
+			if(!parent.document.querySelector('#instructions'))return;
 			
-			var intxt = document.querySelector('#instructions').textContent;
+			var intxt = parent.document.querySelector('#instructions').textContent;
 			
 			if(config.game.auto_respawn){
 				if(/(disconnected|game is full|banned|kicked)/gi.test(intxt))cheat.find_match()
 				else if(cheat.controls && (!cheat.player || !cheat.player[add].active) && /click to play/gi.test(intxt))cheat.controls.toggle(true);
 			}
 			
-			document.querySelectorAll('.streamItem *').forEach(node => node.src = '');
+			parent.document.querySelectorAll('.streamItem *').forEach(node => node.src = '');
 		},
 		find_target(){
 			var targets = cheat.game.players.list.filter(ent => ent[add] && !ent[add].is_you && ent[add].canSee && ent[add].active && ent[add].enemy && (config.aim.frustrum_check ? ent[add].frustum : true)),
@@ -281,7 +277,7 @@ var ui = require('ui'),
 				cheat.controls.keys[cheat.controls.binds.jumpKey.val] ^= 1;
 				if(cheat.controls.keys[cheat.controls.binds.jumpKey.val])cheat.controls.didPressed[cheat.controls.binds.jumpKey.val] = 1;
 				
-				if((document.activeElement.nodeName != 'INPUT' && config.game.bhop == 'keyslide' && ui.inputs.Space || config.game.bhop == 'autoslide') && cheat.player[cheat.vars.yVel] < -0.02 && cheat.player.canSlide){
+				if((parent.document.activeElement.nodeName != 'INPUT' && config.game.bhop == 'keyslide' && ui.inputs.Space || config.game.bhop == 'autoslide') && cheat.player[cheat.vars.yVel] < -0.02 && cheat.player.canSlide){
 					setTimeout(() => cheat.controls.keys[cheat.controls.binds.crouchKey.val] = 0, 325);
 					cheat.controls.keys[cheat.controls.binds.crouchKey.val] = 1;
 				}
@@ -477,7 +473,7 @@ var ui = require('ui'),
 				
 				var orig_mat = obj.material;
 				
-				n.Object.defineProperty(obj, 'material', {
+				Object.defineProperty(obj, 'material', {
 					get: _ => config.esp.status == 'chams' || config.esp.status == 'box_chams' || config.esp.status == 'full'
 						? cheat.materials_esp[ent[add].enemy ? ent[add].risk ? '#F70' : '#F00' : '#0F0']
 						: orig_mat,
@@ -584,12 +580,12 @@ var ui = require('ui'),
 		v3: ['x', 'y', 'z'],
 		render(){ // rendering tasks
 			if(!cheat.cas || !cheat.ctx){
-				cheat.cas = document.querySelector('#game-overlay');
+				cheat.cas = parent.document.querySelector('#game-overlay');
 				cheat.ctx = cheat.cas ? cheat.cas.getContext('2d', { alpha: true }) : {};
 				
 				cheat.center_vec = {
-					x: window.innerWidth / 2,
-					y: window.outerHeight / 2,
+					x: parent.innerWidth / 2,
+					y: parent.outerHeight / 2,
 					distanceTo(p2){return Math.hypot(this.x - p2.x, this.y - p2.y)}
 				}
 			}
@@ -713,7 +709,7 @@ var ui = require('ui'),
 				var lines = [
 					[['#BBB', 'Player: '], ['#FFF', cheat.player && cheat.player[add] && cheat.player[add].pos ? cheat.v3.map(axis => axis + ': ' + cheat.player[add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
 					[['#BBB', 'Target: '], ['#FFF', cheat.target && cheat.target[add] && cheat.target[add].active ? cheat.target.alias + ', ' + cheat.v3.map(axis => axis + ': ' + cheat.target[add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
-					[['#BBB', 'Hacker: '], [window.activeHacker ? '#0F0' : '#F00', window.activeHacker ? 'TRUE' : 'FALSE']],
+					[['#BBB', 'Hacker: '], [parent.activeHacker ? '#0F0' : '#F00', parent.activeHacker ? 'TRUE' : 'FALSE']],
 					[['#BBB', 'Aiming: '], [cheat.player && cheat.player[add] && cheat.player[add].aiming ? '#0F0' : '#F00', cheat.player && cheat.player[add] && cheat.player[add].aiming ? 'TRUE' : 'FALSE']],
 				];
 				
@@ -781,11 +777,11 @@ var ui = require('ui'),
 			mod(__webpack_require__){
 				var vals = Object.values(__webpack_require__.c);
 				
-				n.Object.entries({
+				Object.entries({
 					// util: ['hexToRGB', 'keyboardMap'],
 					gconfig: [ 'isNode', 'isComp', 'isProd' ],
 					ws: [ 'connected', 'send', 'trackPacketStats' ],
-				}).forEach(([ label, entries ]) => vals.forEach(mod => !entries.some(entry => !n.Reflect.apply(n.Object.prototype.hasOwnProperty, mod.exports, [ entry ])) && (cheat[label] = mod.exports)));
+				}).forEach(([ label, entries ]) => vals.forEach(mod => !entries.some(entry => !Reflect.apply(Object.prototype.hasOwnProperty, mod.exports, [ entry ])) && (cheat[label] = mod.exports)));
 			},
 			set game(nv){
 				cheat.game = nv;
@@ -857,12 +853,12 @@ var ui = require('ui'),
 					
 					// 0.025
 					
-					n.Reflect.defineProperty(cheat.gconfig, 'camChaseTrn', {
+					Reflect.defineProperty(cheat.gconfig, 'camChaseTrn', {
 						get: _ => cheat.moving_camera ? ((50 - config.aim.smoothn) / 1000) : orig_camChaseTrn,
 						set: v => orig_camChaseTrn = v,
 					});
 					
-					n.Reflect.defineProperty(cheat.controls, 'target', {
+					Reflect.defineProperty(cheat.controls, 'target', {
 						get: _ => cheat.moving_camera ? cheat.moving_camera : orig_target,
 						set: v => orig_target = v,
 					});
@@ -870,7 +866,7 @@ var ui = require('ui'),
 				
 				cheat.render();
 				
-				return n.Reflect.apply(frame, window, [ func ]);
+				return Reflect.apply(frame, parent, [ func ]);
 			},
 			proxy: class {
 				constructor(input){
@@ -885,8 +881,8 @@ var ui = require('ui'),
 						
 						cheat.log('injected to game');
 						
-						cheat.log('hiding: ' + cheat.objs.storage + '.' + cheat.rnds.storage, window[cheat.objs.storage][cheat.rnds.storage]);
-						delete window[cheat.objs.storage][cheat.rnds.storage];
+						cheat.log('hiding: ' + cheat.objs.storage + '.' + cheat.rnds.storage, parent[cheat.objs.storage][cheat.rnds.storage]);
+						delete parent[cheat.objs.storage][cheat.rnds.storage];
 						
 						break
 				}
@@ -916,11 +912,11 @@ new FontFace('Inconsolata', 'url("https://fonts.gstatic.com/s/inconsolata/v20/Ql
 	weight: 400,
 	stretch: '100%',
 	unicodeRange: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD',
-}).load().then(font => document.fonts.add(font));
+}).load().then(font => parent.document.fonts.add(font));
 
-var orig_funcw = window.Function;
+var orig_funcw = parent.Function;
 
-window.Function = new Proxy(window.Function, {
+parent.Function = new Proxy(parent.Function, {
 	construct(target, args){
 		var script = args.splice(-1)[0];
 		
@@ -944,16 +940,16 @@ window.Function = new Proxy(window.Function, {
 
 			if(cheat.vars_not_found.length)cheat.err('Could not find: ' + cheat.vars_not_found.join(', '));
 			
-			window[cheat.objs.storage][cheat.rnds.storage] = cheat.storage;
+			parent[cheat.objs.storage][cheat.rnds.storage] = cheat.storage;
 			
-			window.Function = orig_funcw;
+			parent.Function = orig_funcw;
 		}
 		
 		return Reflect.construct(target, [ ...args, script ]);
 	}
 });
 
-cheat.wf(() => document && document.body).then(() => ui.init('Shitsploit', 'Press [F1] or [C] to toggle menu', [{
+cheat.wf(() => parent.document && parent.document.body).then(() => ui.init('Shitsploit', 'Press [F1] or [C] to toggle menu', [{
 	name: 'Main',
 	contents: [{
 		name: 'Auto aim',

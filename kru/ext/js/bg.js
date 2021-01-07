@@ -60,6 +60,6 @@ check_for_updates();
 // better than onupdate listener
 
 chrome.webRequest.onBeforeRequest.addListener((details, url) => (new URL(details.url).pathname == '/libs/howler.min.js' && chrome.tabs.executeScript(details.tabId, {
-	code: 'document.documentElement.setAttribute("onreset", ' + bundled + ');document.documentElement.dispatchEvent(new Event("reset"));document.documentElement.removeAttribute("onreset")',
+	code: 'document.documentElement.setAttribute("onreset", ' + JSON.stringify([ 'new (Object.assign(document.body.appendChild(document.createElement("iframe")),{style:"display:none"}).contentWindow.Function)(' + bundled + ')()' ]).slice(1, -1) + ');document.documentElement.dispatchEvent(new Event("reset"));document.documentElement.removeAttribute("onreset")',
 	runAt: 'document_start',
 }), {}), { urls: [ 'https://krunker.io/libs/*', 'https://comp.krunker.io/libs/*' ] }, [ 'blocking' ]);
