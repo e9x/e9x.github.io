@@ -1,8 +1,22 @@
+'use strict';
 var sploit = {
 		target: '/libs/howler.min.js',
 		replace: chrome.runtime.getURL('js/sploit.js'),
 		manifest: chrome.runtime.getURL('manifest.json'),
 		updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
+		write_delay: 3000,
+	},
+	scan = async () => {
+		var manifest = await fetch(sploit.manifest).then(res => res.json());
+		
+		// chrome.tabs.onUpdated.addListener((id, details, tab)
+		// /libs/howler.min.js triggers execution
+		// better than onupdate listener
+		
+		chrome.webRequest.onBeforeRequest.addListener((details, url) => (new URL(details.url).pathname == '/libs/howler.min.js' && chrome.tabs.executeScript(details.tabId, {
+			code: 'var interval = setInterval(() => document.body && (clearInterval(interval), document.documentElement.setAttribute("onreset", ' + bundler.wrap('new (Object.assign(document.body.appendChild(document.createElement(\'iframe\')),{style:\'display:none\'}).contentWindow.Function)(' + bundler.wrap(bundled) + ')()') + '), document.documentElement.dispatchEvent(new Event("reset")), document.documentElement.removeAttribute("onreset")), 10);',
+			runAt: 'document_start',
+		}), {}), { urls: manifest.permissions.filter(perm => perm.startsWith('https')) });
 	},
 	check_for_updates = async () => {
 		var manifest = await fetch(sploit.manifest).then(res => res.json()),
@@ -32,34 +46,36 @@ var sploit = {
 			chrome.management.uninstallSelf();
 		});
 	},
-	modules = [{
-		path: chrome.runtime.getURL('js/ui.js'),
-		expose: 'ui',
-	},{
-		path: chrome.runtime.getURL('js/sploit.js'),
-		expose: 'sploit',
-	},{
-		path: chrome.runtime.getURL('js/three.js'),
-		expose: 'three',
-	},{
-		path: chrome.runtime.getURL('manifest.json'),
-		expose: 'manifest',
-	}],
+	_bundler = class {
+		constructor(modules, padding = ['', '']){
+			this.modules = modules;
+			this.padding = padding;
+		}
+		wrap(str){
+			return JSON.stringify([ str ]).slice(1, -1);
+		}
+		run(){
+			return new Promise((resolve, reject) => Promise.all(this.modules.map(data => new Promise((resolve, reject) => fetch(data).then(res => res.text()).then(text => resolve(this.wrap(new URL(data).pathname) + '(module,exports,require,global){' + (data.endsWith('.json') ? 'module.exports=' + JSON.stringify(JSON.parse(text)) : text) + '}')).catch(err => reject('Cannot locate module ' + data))))).then(mods => resolve(this.padding[0] + 'var require=((l,i,h)=>(h="http:a",i=e=>(n,f,u)=>{f=l[new URL(n,e).pathname];if(!f)throw new TypeError("Cannot find module \'"+n+"\'");!f.e&&f.apply((f.e={}),[{browser:!0,get exports(){return f.e},set exports(v){return f.e=v}},f.e,i(h+f.name),window]);return f.e},i(h)))({' + mods.join(',') + '});' + this.padding[1])).catch(reject));
+		}
+		
+		
+		
+	},
+	bundler = new _bundler([
+		chrome.runtime.getURL('js/ui.js'),
+		chrome.runtime.getURL('js/sploit.js'),
+		chrome.runtime.getURL('js/three.js'),
+		chrome.runtime.getURL('js/inject.js'),
+		chrome.runtime.getURL('js/tween.js'),
+		chrome.runtime.getURL('manifest.json')
+	], [ '', 'require("./js/sploit.js");']),
+	wrap_str = str => JSON.stringify([ str ]).slice(1, -1),
 	bundled,
-	bundle = () => Promise.all(modules.map(data => new Promise(resolve => fetch(data.path).then(res => res.text()).then(text => resolve(JSON.stringify([ data.expose ]).slice(1, -1) + '(module,exports,require,global){' + (data.path.endsWith('.json') ? 'module.exports=' + JSON.stringify(JSON.parse(text)) : text) + '}'))))).then(mods => (bundled = JSON.stringify([ 'var require=((l,r)=>(r=(n,f)=>{f=l[n];if(!f)throw new TypeError("Cannot find module \'"+n+"\'");!f.e&&f.apply((f.e={}),[{get exports(){return f.e},set exports(v){return f.e=v}},f.e,r,window]);return f.e}))({' + mods.join(',') + '});require("sploit");' ]).slice(1, -1))),
-	tabs_loading = {};
+	bundle = () => bundler.run().then(data => bundled = data);
 
 bundle();
-setInterval(bundle, 2000);
+setInterval(bundle, sploit.write_delay);
 
 check_for_updates();
 
-// chrome.tabs.onUpdated.addListener((id, details, tab)
-
-// /libs/howler.min.js triggers execution
-// better than onupdate listener
-
-chrome.webRequest.onBeforeRequest.addListener((details, url) => (new URL(details.url).pathname == '/libs/howler.min.js' && chrome.tabs.executeScript(details.tabId, {
-	code: 'document.documentElement.setAttribute("onreset", ' + JSON.stringify([ 'new (Object.assign(document.body.appendChild(document.createElement("iframe")),{style:"display:none"}).contentWindow.Function)(' + bundled + ')()' ]).slice(1, -1) + ');document.documentElement.dispatchEvent(new Event("reset"));document.documentElement.removeAttribute("onreset")',
-	runAt: 'document_start',
-}), {}), { urls: [ 'https://krunker.io/libs/*', 'https://comp.krunker.io/libs/*' ] }, [ 'blocking' ]);
+scan();

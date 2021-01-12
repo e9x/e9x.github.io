@@ -1,3 +1,4 @@
+'use strict';
 var values;
 
 exports.set_values = vals => (values = vals);
@@ -54,31 +55,12 @@ exports.sync_config = action => {
 
 exports.reload = () => exports.control_updates.forEach(val => val());
 
-exports.init = (title, footer, array) => {
-	var div = exports.rnds.div + '-' + exports.rnds.div1,
-		css_class = cl => exports.rnds['.' + cl],
-		base_css = `
-.${exports.rnds.chr} {
-	white-space: nowrap;
-	text-decoration: none;
-}
-
-.${exports.rnds.chr1} {
-	display: none;
-	font-size: 0px;
-}
-
-` + `
-${div} {
-	display: block;
-}
-
+exports.css = `
 .con {
 	z-index: 9000000;
 	position: absolute;
 	display: flex;
 	width: 420px;
-	height: 370px;
 	background: #112;
 	border: none;
 	flex-direction: column;
@@ -126,7 +108,7 @@ ${div} {
 	display: flex;
 	flex-direction: column;
 	background: #112;
-	height: 100%;
+	height: 296px;
 	border: 2px solid #eee;
 	border-top: none;
 	border-bottom-left-radius: 3px;
@@ -292,7 +274,17 @@ ${div} {
 * {
 	outline: none;
 }
-`.replace(/\.((?:(?!\d|:|,|\.)\S)+)/g, (m, cl) => '.' + css_class(cl));
+`;
+
+exports.init = (title, footer, array) => {
+	var div = exports.rnds.div + '-' + exports.rnds.div1,
+		css_class = cl => exports.rnds['.' + cl],
+		base_css = `
+.${exports.rnds.chr} { white-space: nowrap; text-decoration: none }
+
+.${exports.rnds.chr1} { display: none; font-size: 0px }
+
+${div} { display: block }` + exports.css.replace(/\.((?:(?!\d|:|,|\.)\S)+)/g, (m, cl) => '.' + css_class(cl));
 	
 	customElements.define(div, class extends HTMLDivElement {}, { extends: 'div' });
 	

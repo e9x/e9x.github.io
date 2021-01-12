@@ -1,5 +1,9 @@
-var ui = require('ui'),
-	manifest = require('manifest'),
+'use strict';
+var ui = require('./ui.js'),
+	inject = require('./inject.js'),
+	tween = require('./tween.js'),
+	three = require('./three.js'),
+	manifest = require('../manifest.json'),
 	add = Symbol(),
 	values = ui.set_values({
 		version: manifest.version,
@@ -45,20 +49,8 @@ var ui = require('ui'),
 	}),
 	cheat = {},
 	config = {},
-	uhook = (orig_func, handler) => {
-		var func = Object.defineProperties(function(...args){ return Reflect.apply(handler, this, [orig_func, this, args]) }, Object.getOwnPropertyDescriptors(orig_func));
-		
-		Reflect.defineProperty(func, 'length', { value: orig_func.length, configurable: true, enumerable: false, writable: false });
-		Reflect.defineProperty(func, 'name', { value: orig_func.name, configurable: true, enumerable: false, writable: false });
-		func.toString = Reflect.apply(Function.prototype.bind, orig_func.toString, [orig_func]);
-		func.toString.toString = orig_func.toString.toString;
-		
-		// function prototype usually undefined or void
-		func.prototype = orig_func.prototype;
-		
-		return func
-	},
 	cheat = {
+		pi2: Math.PI * 2,
 		wf: (check, timeout = 5000) => new Promise((resolve, reject) => {
 			var interval = setInterval(() => {
 				var checked = check();
@@ -99,7 +91,7 @@ var ui = require('ui'),
 		vars: {},
 		materials_esp: new Proxy({}, {
 			get(target, prop){
-				if(!target[prop])target[prop] = new cheat.three.MeshBasicMaterial({
+				if(!target[prop])target[prop] = new three.MeshBasicMaterial({
 					transparent: true,
 					fog: false,
 					depthTest: false,
@@ -144,6 +136,13 @@ var ui = require('ui'),
 			}
 		},
 		util: {
+			normal_radian(radian){
+				radian = radian % cheat.pi2;
+				
+				if(radian < 0)radian += cheat.pi2;
+				
+				return radian;
+			},
 			containsPoint(frustum, point){
 				
 				for(var ind = 0; ind < 6; ind++)if(frustum.planes[ind].distanceToPoint(point) < 0)return false;
@@ -243,33 +242,26 @@ var ui = require('ui'),
 			
 			parent.document.querySelectorAll('.streamItem *').forEach(node => node.src = '');
 		},
-		find_target(){
-			var targets = cheat.game.players.list.filter(ent => ent[add] && !ent[add].is_you && ent[add].canSee && ent[add].active && ent[add].enemy && (config.aim.frustrum_check ? ent[add].frustum : true)),
-				target;
-			
-			switch(config.aim.target_sorting){
-				case'dist3d':
-					target = targets.sort((ent_1, ent_2) => ent_1[add].pos.distanceTo(ent_2) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5) )[0];
-					break
-				case'hp':
-					target = targets.sort((ent_1, ent_2) => (ent_1.health - ent_2.health) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5) )[0];
-					break
-				case'dist2d':
-				default:
-					target = targets.sort((ent_1, ent_2) => (cheat.center_vec.distanceTo(ent_1[add].pos2D) - cheat.center_vec.distanceTo(ent_2[add].pos2D)) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5) )[0];
-					break
-			}
-			
-			return target;
+		dist_center(pos){
+			return Math.hypot((parent.innerWidth / 2) - pos.x, (parent.innerHeight / 2) - pos.y);
+		},
+		sorts: {
+			dist3d(ent_1, ent_2){
+				return ent_1[add].pos.distanceTo(ent_2) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5);
+			},
+			dist2d(ent_1, ent_2){
+				return (ent_1, ent_2) => (dist_center(ent_1[add].pos2D) - dist_center(ent_2[add].pos2D) * (ent_1[add].frustum ? 2 : 0.5));
+			},
+			hp(ent_1, ent_2){
+				return (ent_1.health - ent_2.health) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5);
+			},
 		},
 		procInputs(data, ...args){
 			if(!cheat.controls || !cheat.player || !cheat.player[add])return;
 			
-			cheat.moving_camera = false;
-			
 			var keys = {frame: 0, delta: 1, xdir: 2, ydir: 3, moveDir: 4, shoot: 5, scope: 6, jump: 7, reload: 8, crouch: 9, weaponScroll: 10, weaponSwap: 11, moveLock: 12},
 				move_dirs = { idle: -1, forward: 1, back: 5, left: 7, right: 3 },
-				target = cheat.target = cheat.find_target(),
+				target = cheat.target = cheat.game.players.list.filter(ent => ent[add] && !ent[add].is_you && ent[add].canSee && ent[add].active && ent[add].enemy && (config.aim.frustrum_check ? ent[add].frustum : true)).sort(cheat.sorts[config.aim.target_sorting])[0],
 				pm = cheat.game.players.list.filter(ent => ent && ent[add] && ent[add].active && ent[add].enemy && ent[add].canSee).map(ent => ent[add].obj);
 			
 			// skid bhop
@@ -294,8 +286,8 @@ var ui = require('ui'),
 					xDire = cheat.util.getXDire(cheat.player[add].pos.x, cheat.player[add].pos.y, cheat.player[add].pos.z, target.x, yVal, target.z),
 					xv = xDire - cheat.player[cheat.vars.recoilAnimY] * 0.27,
 					rot = {
-						x: cheat.round(Math.max(-Math.PI / 2, Math.min(Math.PI / 2, xv )) % (Math.PI * 2), 3) || 0,
-						y: cheat.round(yDire % (Math.PI * 2), 3) || 0,
+						x: cheat.round(Math.max(-Math.PI / 2, Math.min(Math.PI / 2, xv )) % cheat.pi2, 3) || 0,
+						y: cheat.util.normal_radian(cheat.round(yDire % cheat.pi2, 3)) || 0,
 					},
 					do_aim,
 					shot;
@@ -309,13 +301,29 @@ var ui = require('ui'),
 				
 				shot = cheat.player.weapon.nAuto && cheat.player[cheat.vars.didShoot];
 				
+				if(!cheat.aim_tween || !cheat.aim_tween._isPlaying || cheat.aim_tween.target != target)cheat.aim_tween = new tween.Tween({
+					x: cheat.controls[cheat.vars.pchObjc].rotation.x,
+					y: cheat.util.normal_radian(cheat.controls.object.rotation.y),
+				}).easing(tween.Easing.Quadratic.InOut).onUpdate(rot => cheat.aim_rot = rot);
+				
 				if(config.aim.smooth)switch(config.aim.status){
 					case'assist':
 						
-						if(do_aim)cheat.moving_camera = {
-							xD: rot.x,
-							yD: rot.y,
-						}
+						if(do_aim){
+							cheat.aim_tween.target = target;
+							
+							cheat.aim_tween.to(rot, values.config.aim.smoothn * 25);
+							cheat.aim_tween.start();
+							cheat.aim_tween.update();
+							
+							if(cheat.aim_rot){
+								cheat.controls[cheat.vars.pchObjc].rotation.x = cheat.aim_rot.x;
+								cheat.controls.object.rotation.y = cheat.aim_rot.y;
+								
+								data[keys.xdir] = cheat.aim_rot.x * 1000;
+								data[keys.ydir] = cheat.aim_rot.y * 1000;
+							}
+						}else if(cheat.aim_tween)delete cheat.aim_tween;
 						
 						break
 					case'silent':
@@ -323,9 +331,9 @@ var ui = require('ui'),
 						if(shot)data[keys.shoot] = data[keys.scope] = 0;
 						else data[keys.scope] = 1;
 						
-						if(do_aim)cheat.moving_camera = {
-							xD: rot.x,
-							yD: rot.y,
+						if(do_aim){
+							data[keys.xdir] = rot.x * 1000;
+							data[keys.ydir] = rot.y * 1000;
 						}
 						
 						break
@@ -345,8 +353,8 @@ var ui = require('ui'),
 					case'assist':
 						
 						if(do_aim){
-							cheat.controls[cheat.vars.pchObjc].rotation.x = rot.x
-							cheat.controls.object.rotation.y = rot.y
+							cheat.controls[cheat.vars.pchObjc].rotation.x = rot.x;
+							cheat.controls.object.rotation.y = rot.y;
 							
 							data[keys.xdir] = rot.x * 1000;
 							data[keys.ydir] = rot.y * 1000;
@@ -378,51 +386,49 @@ var ui = require('ui'),
 				});
 			}
 		},
+		ent_pos: {
+			distanceTo(p2){return Math.hypot(this.x - p2.x, this.y - p2.y, this.z - p2.z)},
+			project(t){ return this.applyMatrix4(t.matrixWorldInverse).applyMatrix4(t.projectionMatrix)},
+			applyMatrix4(t){var e=this.x,n=this.y,r=this.z,i=t.elements,a=1/(i[3]*e+i[7]*n+i[11]*r+i[15]);return this.x=(i[0]*e+i[4]*n+i[8]*r+i[12])*a,this.y=(i[1]*e+i[5]*n+i[9]*r+i[13])*a,this.z=(i[2]*e+i[6]*n+i[10]*r+i[14])*a,this},
+		},
 		ent_vals(ent){
-			if(!ent[add])ent[add] = {
-				pos: {
-					distanceTo(p2){return Math.hypot(this.x - p2.x, this.y - p2.y, this.z - p2.z)},
-					get x(){ return ent.x || 0 },
-					get y(){ return ent.y || 0 },
-					get z(){ return ent.z || 0 },
-					project(t){ return this.applyMatrix4(t.matrixWorldInverse).applyMatrix4(t.projectionMatrix)},
-					applyMatrix4: function(t){var e=this.x,n=this.y,r=this.z,i=t.elements,a=1/(i[3]*e+i[7]*n+i[11]*r+i[15]);return this.x=(i[0]*e+i[4]*n+i[8]*r+i[12])*a,this.y=(i[1]*e+i[5]*n+i[9]*r+i[13])*a,this.z=(i[2]*e+i[6]*n+i[10]*r+i[14])*a,this},
-				},
-				get aiming(){
-					return !ent[cheat.vars.aimVal] || ent.weapon.noAim || cheat.target && cheat.target[add] && ent.weapon.melee && ent[add].pos.distanceTo(cheat.target[add].pos) <= 18;
-				},
-				get crouch(){ return ent[cheat.vars.crouchVal] },
-				get obj(){ return ent && ent.lowerBody && ent.lowerBody.parent && ent.lowerBody.parent ? ent.lowerBody.parent.parent : null },
-				// [cheat.vars.objInstances] },
-				get health(){ return ent.health; },
-				get max_health(){ return ent[cheat.vars.maxHealth] },
-				get pos2D(){ return ent.x != null ? cheat.wrld2scrn(ent[add].pos) : { x: 0, y: 0 } },
-				get canSee(){
-					// return ent[add].active && cheat.game[cheat.vars.canSee](cheat.player, ent[add].pos.x, ent[add].pos.y, ent[add].pos.z) == null ? true : false;
-					
-					return ent[add].active && cheat.util.canSee(cheat.player, ent) == null ? true : false;
-				},
-				// cheat.util.containsPoint(cheat.world.frustum, ent[add].pos);
-				// cheat.world.frustum.containsPoint(ent[add].pos);
-				get frustum(){
-					return cheat.util.containsPoint(cheat.world.frustum, ent[add].pos);
-				},
-				get active(){ return ent && ent.x != null && cheat.ctx && ent.health > 0 },
-				get enemy(){ return !ent.team || ent.team != cheat.player.team },
-				get did_shoot(){ return ent[cheat.vars.didShoot] },
-				risk: ent.isDev || ent.isMod || ent.isMapMod || ent.canGlobalKick || ent.canViewReports || ent.partnerApp || ent.canVerify || ent.canTeleport || ent.isKPDMode || ent.level >= 30,
-				is_you: ent[cheat.vars.isYou],
-				get inview(){ return ent[cheat.vars.inView]; },
-				set inview(v){ return ent[cheat.vars.inView] = v; },
+			if(!ent[add]){
+				ent[add] = {
+					pos: Object.assign({}, cheat.ent_pos),
+				};
 			}
 			
+			ent[add].risk = ent.isDev || ent.isMod || ent.isMapMod || ent.canGlobalKick || ent.canViewReports || ent.partnerApp || ent.canVerify || ent.canTeleport || ent.isKPDMode || ent.level >= 30;
+			
+			ent[add].is_you = ent[cheat.vars.isYou];
+			
+			ent[add].pos.x = ent.x || 0;
+			ent[add].pos.y = ent.y || 0;
+			ent[add].pos.z = ent.z || 0;
+			
+			ent[add].aiming = !ent[cheat.vars.aimVal] || ent.weapon.noAim || cheat.target && cheat.target[add] && ent.weapon.melee && ent[add].pos.distanceTo(cheat.target[add].pos) <= 18;
+			
+			ent[add].crouch = ent[cheat.vars.crouchVal];
+			
+			ent[add].obj = ent && ent.lowerBody && ent.lowerBody.parent && ent.lowerBody.parent ? ent.lowerBody.parent.parent : null;
+			
+			ent[add].health = ent.health;
+			ent[add].max_health = ent[cheat.vars.maxHealth];
+			ent[add].pos2D = ent.x != null ? cheat.wrld2scrn(ent[add].pos) : { x: 0, y: 0 };
+			ent[add].canSee = ent[add].active && cheat.util.canSee(cheat.player, ent) == null ? true : false;
+			
+			ent[add].frustum = cheat.util.containsPoint(cheat.world.frustum, ent[add].pos);
+			
+			ent[add].active = ent && ent.x != null && ent[add].obj && cheat.ctx && ent.health > 0;
+			ent[add].enemy = !ent.team || ent.team != cheat.player.team;
+			ent[add].did_shoot = ent[cheat.vars.didShoot];
+			
 			if(ent[add].active){
-				// we are at fastest tick so we can do this
 				if(ent[add].obj)ent[add].obj.visible = true;
 				
-				var normal = ent[add].inview;
+				var normal = ent[cheat.vars.inView];
 				
-				ent[add].inview = cheat.hide_nametags ? false : config.esp.nametags || normal;
+				ent[cheat.vars.inView] = cheat.hide_nametags ? false : config.esp.nametags || normal;
 			}
 		},
 		draw_text(lines, text_x, text_y, font_size){
@@ -582,12 +588,6 @@ var ui = require('ui'),
 			if(!cheat.cas || !cheat.ctx){
 				cheat.cas = parent.document.querySelector('#game-overlay');
 				cheat.ctx = cheat.cas ? cheat.cas.getContext('2d', { alpha: true }) : {};
-				
-				cheat.center_vec = {
-					x: parent.innerWidth / 2,
-					y: parent.outerHeight / 2,
-					distanceTo(p2){return Math.hypot(this.x - p2.x, this.y - p2.y)}
-				}
 			}
 			
 			cheat.ctr('resetTransform');
@@ -659,7 +659,7 @@ var ui = require('ui'),
 							],
 						];
 					});
-				}
+				};
 				
 				cm.obj_calc.forEach(calculated => (cheat.ctx.fillStyle = calculated[0], cheat.ctr('fillRect', calculated[1])));
 				
@@ -681,11 +681,11 @@ var ui = require('ui'),
 						var qx = ent[add].obj.quaternion.x,
 							qy = ent[add].obj.quaternion.y,
 							qz = ent[add].obj.quaternion.z,
-							qw = ent[add].obj.quaternion.w, // calculate quat * vector
+							qw = ent[add].obj.quaternion.w,
 							ix = qw * 0 + qy * 1 - qz * 0,
 							iy = qw * 0 + qz * 0 - qx * 1,
 							iz = qw * 1 + qx * 0 - qy * 0,
-							iw = -qx * 0 - qy * 0 - qz * 1, // calculate result * inverse quat
+							iw = -qx * 0 - qy * 0 - qz * 1,
 							nwp = cm.dims.min.x_abs + ent[add].pos.x + (ix * qw + iw * -qx + iy * -qz - iz * -qy) * -250,
 							nhp = cm.dims.min.z_abs + ent[add].pos.z + (iz * qw + iw * -qz + ix * -qy - iy * -qx) * -250;
 						
@@ -708,28 +708,14 @@ var ui = require('ui'),
 				
 				var lines = [
 					[['#BBB', 'Player: '], ['#FFF', cheat.player && cheat.player[add] && cheat.player[add].pos ? cheat.v3.map(axis => axis + ': ' + cheat.player[add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
+					// [['#BBB', 'Camera: '], ['#FFF', cheat.controls.object.rotation.y + ', ' + cheat.controls[cheat.vars.pchObjc].rotation.x ]],
+					
 					[['#BBB', 'Target: '], ['#FFF', cheat.target && cheat.target[add] && cheat.target[add].active ? cheat.target.alias + ', ' + cheat.v3.map(axis => axis + ': ' + cheat.target[add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
 					[['#BBB', 'Hacker: '], [parent.activeHacker ? '#0F0' : '#F00', parent.activeHacker ? 'TRUE' : 'FALSE']],
 					[['#BBB', 'Aiming: '], [cheat.player && cheat.player[add] && cheat.player[add].aiming ? '#0F0' : '#F00', cheat.player && cheat.player[add] && cheat.player[add].aiming ? 'TRUE' : 'FALSE']],
 				];
 				
 				cheat.draw_text(lines, 15, ((cheat.cas.height / 2) - (lines.length * 14)  / 2), 14);
-				
-				/*cheat.overlay_arr.forEach((line, index, lines) => {
-					var text_xoffset = 0;
-					
-					line.forEach(([ color, string ], text_index) => {
-						var textX = 12 + text_xoffset + text_index * 2,
-							textY = (cheat.cas.height / 2) - ((lines.length * 30) / 2) + index * 20;
-						
-						cheat.ctx.fillStyle = color;
-						
-						cheat.ctr('strokeText', [string, textX, textY]);
-						cheat.ctr('fillText', [string, textX, textY]);
-						
-						text_xoffset += cheat.ctr('measureText', [string]).width;
-					});
-				});*/
 			}
 			
 			if(!cheat.game || !cheat.controls || !cheat.world)return;
@@ -744,7 +730,6 @@ var ui = require('ui'),
 			['pchObjc', /0x0,this\['(\w+)']=new \w+\['Object3D']\(\),this/, 1],
 			['aimVal', /this\['(\w+)']-=0x1\/\(this\['weapon']\['aimSpd']/, 1],
 			['crouchVal', /this\['(\w+)']\+=\w\['crouchSpd']\*\w+,0x1<=this\['\w+']/, 1],
-			// ['canSee', /\w+\['(\w+)']\(\w+,\w+\['x'],\w+\['y'],\w+\['z']\)\)&&/, 1],
 			['didShoot', /--,\w+\['(\w+)']=!0x0/, 1],
 			['ammos', /\['length'];for\(\w+=0x0;\w+<\w+\['(\w+)']\['length']/, 1],
 			['weaponIndex', /\['weaponConfig']\[\w+]\['secondary']&&\(\w+\['(\w+)']==\w+/, 1],
@@ -845,25 +830,6 @@ var ui = require('ui'),
 					}
 				}
 				
-				if(cheat.controls && cheat.gconfig && !cheat.gconfig[cheat.syms.hooked]){
-					cheat.gconfig[cheat.syms.hooked] = true;
-					
-					var orig_camChaseTrn = cheat.gconfig.camChaseTrn,
-						orig_target = cheat.controls.target;
-					
-					// 0.025
-					
-					Reflect.defineProperty(cheat.gconfig, 'camChaseTrn', {
-						get: _ => cheat.moving_camera ? ((50 - config.aim.smoothn) / 1000) : orig_camChaseTrn,
-						set: v => orig_camChaseTrn = v,
-					});
-					
-					Reflect.defineProperty(cheat.controls, 'target', {
-						get: _ => cheat.moving_camera ? cheat.moving_camera : orig_target,
-						set: v => orig_target = v,
-					});
-				}
-				
 				cheat.render();
 				
 				return Reflect.apply(frame, parent, [ func ]);
@@ -889,10 +855,9 @@ var ui = require('ui'),
 			},
 		},
 		inputs: [],
-		three: require('three'),
 	};
 
-cheat.raycaster = new cheat.three.Raycaster();
+cheat.raycaster = new three.Raycaster();
 
 values.config = config = JSON.parse(JSON.stringify(values.oconfig));
 
@@ -914,40 +879,7 @@ new FontFace('Inconsolata', 'url("https://fonts.gstatic.com/s/inconsolata/v20/Ql
 	unicodeRange: 'U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD',
 }).load().then(font => parent.document.fonts.add(font));
 
-var orig_funcw = parent.Function;
 
-parent.Function = new Proxy(parent.Function, {
-	construct(target, args){
-		var script = args.splice(-1)[0];
-		
-		/*
-		// just patch the hook instead of these ntity witty "fixes" when you didnt even bother to get the other release down
-		//
-		// since you want to get the basic part down
-		// check for if any variables can be obtained
-		// otherwise entire script wont work anyways
-		*/
-		
-		if(script && cheat.find_vars.find(([ label, regex, pos ]) => script.match(regex))){
-			// find stuff and patch stuff
-			cheat.patches.forEach((replacement, regex) => script = script.replace(regex, replacement));
-			cheat.find_vars.forEach(([ label, regex, pos ]) => {
-				var match = script.match(regex);
-				
-				if(match && match[pos])cheat.vars[label] = match[pos];
-				else cheat.vars_not_found.push(label), cheat.vars[label] = label;
-			});
-
-			if(cheat.vars_not_found.length)cheat.err('Could not find: ' + cheat.vars_not_found.join(', '));
-			
-			parent[cheat.objs.storage][cheat.rnds.storage] = cheat.storage;
-			
-			parent.Function = orig_funcw;
-		}
-		
-		return Reflect.construct(target, [ ...args, script ]);
-	}
-});
 
 cheat.wf(() => parent.document && parent.document.body).then(() => ui.init('Shitsploit', 'Press [F1] or [C] to toggle menu', [{
 	name: 'Main',
@@ -1144,7 +1076,7 @@ cheat.wf(() => parent.document && parent.document.body).then(() => ui.init('Shit
 		type: 'function_inline',
 		key: 'unset',
 		val(){
-			location.href = 'https://e9x.github.io/kru/inv/';
+			window.open('https://e9x.github.io/kru/inv/');
 		},
 	},{
 		name: 'Reset settings',
@@ -1155,3 +1087,4 @@ cheat.wf(() => parent.document && parent.document.body).then(() => ui.init('Shit
 }]));
 
 ui.sync_config('load');
+inject(cheat);

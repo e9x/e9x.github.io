@@ -5,7 +5,6 @@
 	"manifest_version": 2,
 	"permissions": [
 		"webRequest",
-		"webRequestBlocking",
 		"downloads",
 		"tabs",
 		"https://krunker.io/*",
