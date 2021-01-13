@@ -301,7 +301,7 @@ var ui = require('./ui.js'),
 				
 				shot = cheat.player.weapon.nAuto && cheat.player[cheat.vars.didShoot];
 				
-				if(!cheat.aim_tween || !cheat.aim_tween._isPlaying || cheat.aim_tween.target != target)cheat.aim_tween = new tween.Tween({
+				if(!cheat.aim_tween || !cheat.aim_tween._isPlaying)cheat.aim_tween = new tween.Tween({
 					x: cheat.controls[cheat.vars.pchObjc].rotation.x,
 					y: cheat.util.normal_radian(cheat.controls.object.rotation.y),
 				}).easing(tween.Easing.Quadratic.InOut).onUpdate(rot => cheat.aim_rot = rot);
@@ -310,8 +310,6 @@ var ui = require('./ui.js'),
 					case'assist':
 						
 						if(do_aim){
-							cheat.aim_tween.target = target;
-							
 							cheat.aim_tween.to(rot, values.config.aim.smoothn * 25);
 							cheat.aim_tween.start();
 							cheat.aim_tween.update();
@@ -362,7 +360,7 @@ var ui = require('./ui.js'),
 						
 						break
 				}
-			}
+			}else if(cheat.aim_tween)delete cheat.aim_tween;
 			
 			this[cheat.syms.procInputs](data, ...args);
 		},

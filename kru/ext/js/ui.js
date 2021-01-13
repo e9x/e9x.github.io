@@ -57,15 +57,21 @@ exports.reload = () => exports.control_updates.forEach(val => val());
 
 exports.css = `
 .con {
+	border-radius: 2px;
 	z-index: 9000000;
 	position: absolute;
 	display: flex;
 	width: 420px;
-	background: #112;
+	background: #112B;
 	border: none;
 	flex-direction: column;
 	transition: opacity .15s ease-in-out, color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 	user-select: none;
+	opacity: 0.7;
+}
+
+.con:hover {
+	opacity: 1;
 }
 
 .con, .con * {
@@ -76,12 +82,6 @@ exports.css = `
 .cons {
 	display: flex;
 	flex: 1 1 0;
-}
-
-.bar {
-	border-top-left-radius: 2px;
-	border-top-right-radius: 2px;
-	-webkit-app-region: drag;
 }
 
 .bar {
