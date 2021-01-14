@@ -25,14 +25,8 @@ module.exports = cheat => parent.Function = new Proxy(parent.Function, {
 	}
 });
 
-/*var ofetch = parent.fetch,
-	routes = new Map([
-		[ 'https://matchmaker.krunker.io', 'https://localhost:3040' ],
-		[ 'social.krunker.io', 'localhost:3040' ],
-	]);
-
-parent.fetch = (url, opts) => {
-	routes.forEach((repl, targ) => url = url.replace(targ, repl));
+/*parent.fetch = (url, opts) => {
+	url = url.replace('https://matchmaker.krunker.io', 'https://localhost:3040');
 	
-	return ofetch(url, opts);
+	return fetch(url, opts);
 };*/
