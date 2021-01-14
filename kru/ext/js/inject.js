@@ -25,7 +25,7 @@ module.exports = cheat => parent.Function = new Proxy(parent.Function, {
 	}
 });
 
-var ofetch = parent.fetch,
+/*var ofetch = parent.fetch,
 	routes = new Map([
 		[ 'https://matchmaker.krunker.io', 'https://localhost:3040' ],
 		[ 'social.krunker.io', 'localhost:3040' ],
@@ -35,12 +35,4 @@ parent.fetch = (url, opts) => {
 	routes.forEach((repl, targ) => url = url.replace(targ, repl));
 	
 	return ofetch(url, opts);
-};
-
-parent.WebSocket = class extends parent.WebSocket {
-	constructor(url){
-		routes.forEach((repl, targ) => url = url.replace(targ, repl));
-		
-		return super(url);
-	}
-}
+};*/

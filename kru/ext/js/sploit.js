@@ -250,7 +250,8 @@ var ui = require('./ui.js'),
 				return ent_1[add].pos.distanceTo(ent_2) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5);
 			},
 			dist2d(ent_1, ent_2){
-				return (ent_1, ent_2) => (dist_center(ent_1[add].pos2D) - dist_center(ent_2[add].pos2D) * (ent_1[add].frustum ? 2 : 0.5));
+				//  * (ent_1[add].frustum ? 2 : 0.5
+				return (ent_1, ent_2) => (dist_center(ent_1[add].pos2D) - dist_center(ent_2[add].pos2D));
 			},
 			hp(ent_1, ent_2){
 				return (ent_1.health - ent_2.health) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5);
