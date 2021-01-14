@@ -246,15 +246,19 @@ var ui = require('./ui.js'),
 			return Math.hypot((parent.innerWidth / 2) - pos.x, (parent.innerHeight / 2) - pos.y);
 		},
 		sorts: {
+			//  * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5);
 			dist3d(ent_1, ent_2){
-				return ent_1[add].pos.distanceTo(ent_2) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5);
+				return ent_1[add].pos.distanceTo(ent_2);
 			},
 			dist2d(ent_1, ent_2){
 				//  * (ent_1[add].frustum ? 2 : 0.5
-				return (ent_1, ent_2) => (dist_center(ent_1[add].pos2D) - dist_center(ent_2[add].pos2D));
+				return (ent_1, ent_2) => dist_center(ent_1[add].pos2D) - dist_center(ent_2[add].pos2D);
 			},
 			hp(ent_1, ent_2){
-				return (ent_1.health - ent_2.health) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5);
+				return ent_1.health - ent_2.health;
+			},
+			norm(ent_1, ent_2){
+				return cheat.sorts[config.aim.target_sorting](ent_1, ent_2) * (ent_1[add].frustum == ent_2[add].frustum ? 1 : 0.5);
 			},
 		},
 		procInputs(data, ...args){
@@ -262,7 +266,7 @@ var ui = require('./ui.js'),
 			
 			var keys = {frame: 0, delta: 1, xdir: 2, ydir: 3, moveDir: 4, shoot: 5, scope: 6, jump: 7, reload: 8, crouch: 9, weaponScroll: 10, weaponSwap: 11, moveLock: 12},
 				move_dirs = { idle: -1, forward: 1, back: 5, left: 7, right: 3 },
-				target = cheat.target = cheat.game.players.list.filter(ent => ent[add] && !ent[add].is_you && ent[add].canSee && ent[add].active && ent[add].enemy && (config.aim.frustrum_check ? ent[add].frustum : true)).sort(cheat.sorts[config.aim.target_sorting])[0],
+				target = cheat.target = cheat.game.players.list.filter(ent => ent[add] && !ent[add].is_you && ent[add].canSee && ent[add].active && ent[add].enemy && (config.aim.frustrum_check ? ent[add].frustum : true)).sort(cheat.sorts.norm)[0],
 				pm = cheat.game.players.list.filter(ent => ent && ent[add] && ent[add].active && ent[add].enemy && ent[add].canSee).map(ent => ent[add].obj);
 			
 			// skid bhop
@@ -322,7 +326,7 @@ var ui = require('./ui.js'),
 								data[keys.xdir] = cheat.aim_rot.x * 1000;
 								data[keys.ydir] = cheat.aim_rot.y * 1000;
 							}
-						}else if(cheat.aim_tween)delete cheat.aim_tween;
+						}else if(cheat.aim_tween)cheat.aim_tween.stop(), delete cheat.aim_tween;
 						
 						break
 					case'silent':
@@ -361,7 +365,7 @@ var ui = require('./ui.js'),
 						
 						break
 				}
-			}else if(cheat.aim_tween)delete cheat.aim_tween;
+			}else if(cheat.aim_tween)cheat.aim_tween.stop(), delete cheat.aim_tween;
 			
 			this[cheat.syms.procInputs](data, ...args);
 		},
@@ -707,8 +711,6 @@ var ui = require('./ui.js'),
 				
 				var lines = [
 					[['#BBB', 'Player: '], ['#FFF', cheat.player && cheat.player[add] && cheat.player[add].pos ? cheat.v3.map(axis => axis + ': ' + cheat.player[add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
-					// [['#BBB', 'Camera: '], ['#FFF', cheat.controls.object.rotation.y + ', ' + cheat.controls[cheat.vars.pchObjc].rotation.x ]],
-					
 					[['#BBB', 'Target: '], ['#FFF', cheat.target && cheat.target[add] && cheat.target[add].active ? cheat.target.alias + ', ' + cheat.v3.map(axis => axis + ': ' + cheat.target[add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
 					[['#BBB', 'Hacker: '], [parent.activeHacker ? '#0F0' : '#F00', parent.activeHacker ? 'TRUE' : 'FALSE']],
 					[['#BBB', 'Aiming: '], [cheat.player && cheat.player[add] && cheat.player[add].aiming ? '#0F0' : '#F00', cheat.player && cheat.player[add] && cheat.player[add].aiming ? 'TRUE' : 'FALSE']],
@@ -1087,3 +1089,5 @@ cheat.wf(() => parent.document && parent.document.body).then(() => ui.init('Shit
 
 ui.sync_config('load');
 inject(cheat);
+
+// parent.fetch = (url, opts) => fetch(url.replace('https://matchmaker.krunker.io', 'https://localhost:3040'), opts);

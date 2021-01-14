@@ -24,9 +24,3 @@ module.exports = cheat => parent.Function = new Proxy(parent.Function, {
 		return Reflect.construct(target, [ ...args, script ]);
 	}
 });
-
-/*parent.fetch = (url, opts) => {
-	url = url.replace('https://matchmaker.krunker.io', 'https://localhost:3040');
-	
-	return fetch(url, opts);
-};*/
