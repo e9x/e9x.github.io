@@ -1,27 +1,11 @@
 'use strict';
 var sploit = {
-		target: '/libs/howler.min.js',
-		replace: chrome.runtime.getURL('js/sploit.js'),
-		manifest: chrome.runtime.getURL('manifest.json'),
 		updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
 		write_delay: 3000,
+		active: true,
 	},
-	scan = async () => {
-		var manifest = await fetch(sploit.manifest).then(res => res.json());
-		
-		// chrome.tabs.onUpdated.addListener((id, details, tab)
-		// /libs/howler.min.js triggers execution
-		// better than onupdate listener
-		
-		chrome.webRequest.onBeforeRequest.addListener((details, url) => (new URL(details.url).pathname == '/libs/howler.min.js' && chrome.tabs.executeScript(details.tabId, {
-			code: 'var interval = setInterval(() => document.body && (clearInterval(interval), document.documentElement.setAttribute("onreset", ' + bundler.wrap('new (Object.assign(document.body.appendChild(document.createElement(\'iframe\')),{style:\'display:none\'}).contentWindow.Function)(' + bundler.wrap(bundled) + ')()') + '), document.documentElement.dispatchEvent(new Event("reset")), document.documentElement.removeAttribute("onreset")), 10);',
-			runAt: 'document_start',
-		}), {}), { urls: manifest.permissions.filter(perm => perm.startsWith('https')) });
-	},
-	check_for_updates = async () => {
-		var manifest = await fetch(sploit.manifest).then(res => res.json()),
-			updates = await fetch(sploit.updates).then(res => res.json()),
-			current_ver = +(manifest.version.replace(/\D/g, '')),
+	check_for_updates = (manifest, updates) => {
+		var current_ver =+(manifest.version.replace(/\D/g, '')),
 			latest_ver = +(updates.extension.version.replace(/\D/g, ''));
 		
 		if(current_ver > latest_ver)return console.info('sploit is newer than the latest release');
@@ -62,17 +46,55 @@ var sploit = {
 		chrome.runtime.getURL('js/ui.js'),
 		chrome.runtime.getURL('js/sploit.js'),
 		chrome.runtime.getURL('js/three.js'),
-		chrome.runtime.getURL('js/inject.js'),
-		chrome.runtime.getURL('js/tween.js'),
-		chrome.runtime.getURL('manifest.json')
-	], [ '', 'require("./js/sploit.js");']),
-	wrap_str = str => JSON.stringify([ str ]).slice(1, -1),
+		chrome.runtime.getURL('js/input.js'),
+		chrome.runtime.getURL('js/visual.js'),
+		chrome.runtime.getURL('js/ui.js'),
+		chrome.runtime.getURL('js/util.js'),
+		chrome.runtime.getURL('manifest.json'),
+	], [ '(()=>{', 'require("./js/sploit.js")})();']),
 	bundled,
-	bundle = () => bundler.run().then(data => bundled = data);
+	bundle = () => bundler.run().then(data => bundled = data.replace(/use strict/g, 'use pee'));
 
-bundle();
-setInterval(bundle, sploit.write_delay);
+fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()).then(manifest => {
+	// 1. prevent krunker wasm from being loaded
+	chrome.webRequest.onBeforeRequest.addListener(details => ({ cancel: sploit.active && details.url.includes('.wasm') }), { urls: manifest.permissions.filter(perm => perm.startsWith('http')) }, [ 'blocking' ]);
+	
+	// 2. inject sploit code
+	chrome.webNavigation.onCompleted.addListener((details, url = new URL(details.url)) => sploit.active && url.host.endsWith('krunker.io') && url.pathname == '/' && chrome.tabs.executeScript(details.tabId, {
+		code: 'var interval = setInterval(() => document.body && (clearInterval(interval), document.documentElement.setAttribute("onreset", ' + bundler.wrap('new (Object.assign(document.body.appendChild(document.createElement(\'iframe\')),{style:\'display:none\'}).contentWindow.Function)(' + bundler.wrap(bundled) + ')()') + '), document.documentElement.dispatchEvent(new Event("reset")), document.documentElement.removeAttribute("onreset")), 10);',
+		runAt: 'document_start',
+	}));
+	
+	// 3. check for updates
+	fetch(sploit.updates).then(res => res.json()).then(updates => check_for_updates(manifest, updates));
+	
+	// 4. bundle then listen on interface port
+	bundle().then(() => chrome.extension.onConnect.addListener(port => {
+		port.postMessage([ 'sploit', sploit ]);
+		
+		port.onMessage.addListener(data => {
+			var event = data.splice(0, 1)[0];
+			
+			switch(event){
+				case'userscript':
+					
+					var url = URL.createObjectURL(new Blob([ '// ==UserScript==\n// @name         Sploit\n// @namespace    https://skidlamer.github.io\n// @version      ' + manifest.version + '\n// @extracted    ' + new Date().toGMTString() + '\n// @description  Sploit Loader\n// @author       Gaming Gurus\n// @match        https://krunker.io/*\n// @grant        none\n// @run-at       document-start\n// ==/UserScript==\n\n' + bundled ], { type: 'application/javascript' }));
+					
+					chrome.downloads.download({
+						url: url,
+						filename: 'sploit.user.js',
+					}, download => URL.revokeObjectURL(url));
+					
+					break;
+				case'sploit':
+					
+					// writing config
+					sploit[data[0]] = data[1];
+					
+					break;
+			}
+		});
+	}));
 
-check_for_updates();
-
-scan();
+	setInterval(bundle, sploit.write_delay);
+});

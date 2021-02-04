@@ -1,20 +1,25 @@
 {
 	"name": "Sploit",
-	"version": "1.0.8",
-	"description": "Krunker cheat loader",
+	"version": "2.0.0",
+	"description": "Sploit loader",
 	"manifest_version": 2,
 	"permissions": [
-		"webRequest",
+		"webNavigation",
 		"downloads",
-		"tabs",
 		"https://krunker.io/*",
-		"https://comp.krunker.io/*"
+		"https://comp.krunker.io/*",
+		"webRequest",
+		"webRequestBlocking"
 	],
+	"browser_action": {
+		"default_title": "Sploit",
+		"default_popup": "popup.html"
+	},
 	"background": {
 		"scripts": ["js/bg.js"],
 		"persistent": true
 	},
 	"icons": {
-		"48": "src/icon.png"
+		"48": "icon.png"
 	}
 }
