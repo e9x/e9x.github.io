@@ -559,7 +559,8 @@ cheat.ui = new (require('./ui.js').init)({
 	}],
 });
 
-var ofetch = parent.fetch;
+var ofetch = parent.fetch,
+	proxy; // 'localhost:3040';
 
 parent.fetch = _ => new Promise(r => r({ json: _ => new Promise(r => r({})), text: _ => new Promise(r => r('window.initWASM=_=>_')), arrayBuffer: _ => new Promise(r => r(new ArrayBuffer())) }));
 
@@ -567,5 +568,5 @@ ofetch('https://api.sys32.dev/token').then(res => res.json()).then(data => ofetc
 	cheat.patches.forEach(([ regex, replace ]) => vries = vries.replace(regex, replace));
 	cheat.find_vars.forEach(([ name, regex, index ]) => cheat.vars[name] = (vries.match(regex)||[])[index]);
 	
-	cheat.wf(() => document.readyState == 'complete').then(() => new parent.Function('WP_fetchMMToken', 'fetch', 'ssd', 'Proxy', vries)(new Promise(r => r(data.token)), (url, opts) => ofetch((url + '').replace('matchmaker.krunker.io', 'localhost:3040'), opts), cheat.storage, class { constructor(input){ return input } }));
+	cheat.wf(() => document.readyState == 'complete').then(() => new parent.Function('WP_fetchMMToken', 'fetch', 'ssd', 'Proxy', vries)(new Promise(r => r(data.token)), proxy ? (url, opts) => ofetch((url + '').replace('matchmaker.krunker.io', proxy) : ofetch, opts), cheat.storage, class { constructor(input){ return input } }));
 }));
