@@ -215,7 +215,7 @@ var add = Symbol(),
 					// 0.025
 					
 					Object.defineProperty(parent.Object.prototype, 'camChaseTrn', {
-						get: _ => cheat.moving_camera ? ((50 - cheat.config.aim.smoothn) / 2000) : orig_camChaseTrn,
+						get: _ => cheat.moving_camera ? ((50 - cheat.config.aim.smooth.value) / 5000) : orig_camChaseTrn,
 						set: v => orig_camChaseTrn = v,
 					});
 					
@@ -239,8 +239,7 @@ var add = Symbol(),
 				return ent_1[add].pos.distanceTo(ent_2);
 			},
 			dist2d(ent_1, ent_2){
-				//  * (ent_1[add].frustum ? 2 : 0.5
-				return (ent_1, ent_2) => dist_center(ent_1[add].pos2D) - dist_center(ent_2[add].pos2D);
+				return (ent_1, ent_2) => dist_center(ent_2[add].pos2D) - dist_center(ent_1[add].pos2D);
 			},
 			hp(ent_1, ent_2){
 				return ent_1.health - ent_2.health;
@@ -358,7 +357,7 @@ cheat.ui = new (require('./ui.js').init)({
 	title: 'Shitsploit',
 	footer: 'Press [F1] or [C] to toggle menu',
 	config: {
-		key: 'krk_custSops',
+		key: 'krk_custcSops',
 		save(){
 			localStorage.setItem(this.key, JSON.stringify(cheat.config));
 		},
@@ -560,7 +559,7 @@ cheat.ui = new (require('./ui.js').init)({
 });
 
 var ofetch = parent.fetch,
-	proxy; // 'localhost:3040';
+	proxy = 'localhost:3040';
 
 parent.fetch = _ => new Promise(r => r({ json: _ => new Promise(r => r({})), text: _ => new Promise(r => r('window.initWASM=_=>_')), arrayBuffer: _ => new Promise(r => r(new ArrayBuffer())) }));
 

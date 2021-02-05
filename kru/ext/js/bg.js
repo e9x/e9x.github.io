@@ -78,7 +78,7 @@ fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()).then(manif
 			switch(event){
 				case'userscript':
 					
-					var url = URL.createObjectURL(new Blob([ '// ==UserScript==\n// @name         Sploit\n// @namespace    https://skidlamer.github.io\n// @version      ' + manifest.version + '\n// @extracted    ' + new Date().toGMTString() + '\n// @description  Sploit Loader\n// @author       Gaming Gurus\n// @match        https://krunker.io/*\n// @grant        none\n// @run-at       document-start\n// ==/UserScript==\n\n' + bundled ], { type: 'application/javascript' }));
+					var url = URL.createObjectURL(new Blob([ '// ==UserScript==\n// @name         Sploit\n// @namespace    https://skidlamer.github.io\n// @supportURL   https://e9x.github.io/kru/inv/\n// @version      ' + manifest.version + '\n// @extracted    ' + new Date().toGMTString() + '\n// @description  Sploit Loader\n// @author       Gaming Gurus\n// @match        https://krunker.io/*\n// @grant        none\n// @run-at       document-start\n// ==/UserScript==\n\n' + bundled ], { type: 'application/javascript' }));
 					
 					chrome.downloads.download({
 						url: url,

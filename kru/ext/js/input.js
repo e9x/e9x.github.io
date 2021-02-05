@@ -40,7 +40,7 @@ module.exports = (cheat, data) => {
 		
 		do_aim = cheat.config.aim.status == 'silent' ? data[keys.shoot] || cheat.player.weapon.melee : cheat.config.aim.status == 'assist' && (cheat.controls[cheat.vars.mouseDownR] || cheat.controls.keys[cheat.controls.binds.aimKey.val]);
 		
-		if(cheat.config.aim.smooth)switch(cheat.config.aim.status){
+		if(cheat.config.aim.smooth.status)switch(cheat.config.aim.status){
 			case'assist':
 				
 				if(do_aim)cheat.moving_camera = {
