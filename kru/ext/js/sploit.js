@@ -94,6 +94,7 @@ var add = Symbol(),
 				},
 			},
 			game: {
+				proxy: false,
 				bhop: 'off',
 				wireframe: false,
 				auto_respawn: false,
@@ -472,6 +473,12 @@ cheat.ui = new (require('./ui.js').init)({
 			get: _ => cheat.config.game.auto_respawn,
 			set: v => cheat.config.game.auto_respawn = v,
 			key: 'unset',
+		},{
+			name: 'Anti IP Ban',
+			type: 'bool',
+			get: _ => cheat.config.game.proxy,
+			set: v => cheat.config.game.proxy = v,
+			key: 'unset',
 		}],
 	},{
 		name: 'Aim',
@@ -558,8 +565,7 @@ cheat.ui = new (require('./ui.js').init)({
 	}],
 });
 
-var ofetch = parent.fetch,
-	proxy = 'localhost:3040';
+var ofetch = parent.fetch;
 
 parent.fetch = _ => new Promise(r => r({ json: _ => new Promise(r => r({})), text: _ => new Promise(r => r('window.initWASM=_=>_')), arrayBuffer: _ => new Promise(r => r(new ArrayBuffer())) }));
 
@@ -567,5 +573,5 @@ ofetch('https://api.sys32.dev/token').then(res => res.json()).then(data => ofetc
 	cheat.patches.forEach(([ regex, replace ]) => vries = vries.replace(regex, replace));
 	cheat.find_vars.forEach(([ name, regex, index ]) => cheat.vars[name] = (vries.match(regex)||[])[index]);
 	
-	cheat.wf(() => document.readyState == 'complete').then(() => new parent.Function('WP_fetchMMToken', 'fetch', 'ssd', 'Proxy', vries)(new Promise(r => r(data.token)), proxy ? (url, opts) => ofetch((url + '').replace('matchmaker.krunker.io', proxy), opts) : ofetch, cheat.storage, class { constructor(input){ return input } }));
+	cheat.wf(() => document.readyState == 'complete').then(() => new parent.Function('WP_fetchMMToken', 'WebSocket', 'fetch', 'ssd', 'Proxy', vries)(new Promise(r => r(data.token)), cheat.config.game.proxy ? class extends WebSocket { constructor(url, opts){ super('wss://krunker.space/c5580cf2af/ws', encodeURIComponent(btoa(url))) } } : WebSocket, ofetch, cheat.storage, class { constructor(input){ return input } }));
 }));
