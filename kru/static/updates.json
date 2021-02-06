@@ -19,7 +19,7 @@
 	"latest": {
 		"working": true,
 		"version": "8.8.7",
-		"install": {
+		"installers": {
 			"Windows_NT": "none",
 			"Linux": "none",
 			"Darwin": "none"
