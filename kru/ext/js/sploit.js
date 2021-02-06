@@ -356,6 +356,26 @@ var add = Symbol(),
 			else if(cheat.has_instruct('disconnected'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
 			else if(cheat.has_instruct('click to play') && cheat.config.game.auto_respawn && (!cheat.player || !cheat.player[cheat.add] || !cheat.player[cheat.add].active || !cheat.player[cheat.add].health))cheat.controls.toggle(true);
 		}, 100),
+		check_for_updates(){
+			if(sploit.update_prompted)return;
+			
+			fetch(sploit.updates).then(res => res.json()).then(updates => {
+				var current_ver =+(manifest.version.replace(/\D/g, '')),
+					latest_ver = +(updates.userscript.version.replace(/\D/g, ''));
+				
+				if(current_ver > latest_ver)return console.info('sploit is newer than the latest release');
+				
+				if(current_ver == latest_ver)return console.info('sploit is up-to-date');
+				
+				console.warn('sploit is out-of-date!');
+				
+				if(!confirm('Sploit is out-of-date (' + updates.userscript.version + ' available), do you wish to update?'))return sploit.update_prompted = true;
+				
+				sploit.update_prompted = true;
+				
+				parent.location.assign(updates.userscript.install);
+			});
+		},
 		api: 'https://api.brownstation.pw/',
 	};
 
@@ -573,46 +593,27 @@ cheat.ui = new (require('./ui.js').init)({
 	}],
 });
 
-var ofetch = parent.fetch;
-
 parent.fetch = _ => new Promise(r => r({ json: _ => new Promise(r => r({})), text: _ => new Promise(r => r('window.initWASM=_=>_')), arrayBuffer: _ => new Promise(r => r(new ArrayBuffer())) }));
 
-ofetch(new URL('/token', cheat.api)).then(res => res.json()).then(data => ofetch(new URL('/data/game.' + data.build + '.js', cheat.api)).then(res => res.text()).then(vries => {
+fetch(new URL('/token', cheat.api)).then(res => res.json()).then(data => fetch(new URL('/data/game.' + data.build + '.js', cheat.api)).then(res => res.text()).then(vries => {
 	cheat.patches.forEach(([ regex, replace ]) => vries = vries.replace(regex, replace));
 	cheat.find_vars.forEach(([ name, regex, index ]) => cheat.vars[name] = (vries.match(regex)||[])[index]);
 	
-	cheat.wf(() => document.readyState == 'complete').then(() => new parent.Function('WP_fetchMMToken', 'WebSocket', 'fetch', 'ssd', 'Proxy', vries)(new Promise(r => r(data.token)), cheat.config.game.proxy ? class extends WebSocket { constructor(url, opts){ super('wss://krunker.space/c5580cf2af/ws', encodeURIComponent(btoa(url))) } } : WebSocket, ofetch, cheat.storage, class { constructor(input){ return input } }));
+	cheat.wf(() => document.readyState == 'complete').then(() => new parent.Function('WP_fetchMMToken', 'WebSocket', 'fetch', 'ssd', 'Proxy', vries)(new Promise(r => r(data.token)), cheat.config.game.proxy ? class extends WebSocket { constructor(url, opts){ super('wss://krunker.space/c5580cf2af/ws', encodeURIComponent(btoa(url))) } } : WebSocket, fetch, cheat.storage, class { constructor(input){ return input } }));
 }));
 
-if(parent.location == window.location){ // running in tampermonkey
+if(module.userscript){ // running in tampermonkey
+	console.log('in userscript');
+	
 	var sploit = {
 			updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
 			write_interval: 3000,
 			update_interval: 5000,
 			active: true,
 			update_prompted: false,
-		},
-		check_for_updates = async () => {
-			if(sploit.update_prompted)return;
-			
-			var updates = await fetch(sploit.updates).then(res => res.json()),
-				current_ver =+(manifest.version.replace(/\D/g, '')),
-				latest_ver = +(updates.userscript.version.replace(/\D/g, ''));
-			
-			if(current_ver > latest_ver)return console.info('sploit is newer than the latest release');
-			
-			if(current_ver == latest_ver)return console.info('sploit is up-to-date');
-			
-			console.warn('sploit is out-of-date!');
-			
-			if(!confirm('Sploit is out-of-date (' + updates.userscript.version + ' available), do you wish to update?'))return sploit.update_prompted = true;
-			
-			sploit.update_prompted = true;
-			
-			parent.location.assign(updates.userscript.install);
 		};
 	
-	check_for_updates();
+	cheat.check_for_updates();
 	
-	setInterval(check_for_updates, sploit.update_interval);
+	setInterval(cheat.check_for_updates, sploit.update_interval);
 }
