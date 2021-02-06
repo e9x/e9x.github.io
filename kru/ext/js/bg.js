@@ -89,7 +89,7 @@ fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()).then(manif
 				case'userscript':
 					var obj = {
 						name: 'Sploit',
-						namespace: 'https://github.com/e9x/e9x.github.io/tree/main/kru/ext',
+						namespace: 'https://e9x.github.io/',
 						supportURL: 'https://e9x.github.io/kru/inv/',
 						version: manifest.version,
 						extracted: new Date().toGMTString(),
