@@ -609,7 +609,7 @@ if(parent.location == window.location){ // running in tampermonkey
 			
 			sploit.update_prompted = true;
 			
-			window.open(updates.userscript.install);
+			parent.location.assign(updates.userscript.install);
 		};
 	
 	check_for_updates();
