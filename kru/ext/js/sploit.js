@@ -104,6 +104,7 @@ var add = Symbol(),
 		vars: {},
 		vars_not_found: [],
 		find_vars: [
+			['camChaseSpd', /(?:this(?:\.[^\s]+){2}){6}\)\*[^\s]+\*[^\s]+\.([^\s;]+)/, 1],
 			['isYou', /this\.accid=0,this\.(\w+)=\w+,this\.isPlayer/, 1],
 			['inView', /&&!\w\.\w+&&\w\.\w+&&\w\.(\w+)\){/, 1],
 			['pchObjc', /0,this\.(\w+)=new \w+\.Object3D,this/, 1],
@@ -141,8 +142,7 @@ var add = Symbol(),
 				var vals = Object.values(__webpack_require__.c);
 				
 				Object.entries({
-					// util: ['hexToRGB', 'keyboardMap'],
-					gconfig: [ 'isNode', 'isComp', 'isProd' ],
+					gconfig: [ cheat.vars.camChaseSpd ],
 					ws: [ 'connected', 'send', 'trackPacketStats' ],
 				}).forEach(([ label, entries ]) => vals.forEach(mod => !entries.some(entry => !Reflect.apply(Object.prototype.hasOwnProperty, mod.exports, [ entry ])) && (cheat[label] = mod.exports)));
 			},
@@ -211,18 +211,16 @@ var add = Symbol(),
 				if(cheat.controls && !cheat.controls[cheat.syms.hooked]){
 					cheat.controls[cheat.syms.hooked] = true;
 					
-					var orig_camChaseTrn = 0.0012, orig_target;
+					var camChaseSpd = 0.0012, target;
 					
-					// 0.025
-					
-					Object.defineProperty(parent.Object.prototype, 'camChaseTrn', {
-						get: _ => cheat.moving_camera ? ((50 - cheat.config.aim.smooth.value) / 5000) : orig_camChaseTrn,
-						set: v => orig_camChaseTrn = v,
+					if(cheat.gconfig)Object.defineProperty(cheat.gconfig, cheat.vars.camChaseSpd, {
+						get: _ => cheat.moving_camera ? ((50 - cheat.config.aim.smooth.value) / 5000) : camChaseSpd,
+						set: v => camChaseSpd = v,
 					});
 					
 					Object.defineProperty(cheat.controls, 'target', {
-						get: _ => cheat.moving_camera ? cheat.moving_camera : orig_target,
-						set: v => orig_target = v,
+						get: _ => cheat.moving_camera ? cheat.moving_camera : target,
+						set: v => target = v,
 					});
 				}
 				
