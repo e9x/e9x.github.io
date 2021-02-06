@@ -32,6 +32,7 @@ exports.css = `
 	position: absolute;
 	display: flex;
 	width: 420px;
+	height: 294px;
 	background: #112B;
 	flex-direction: column;
 	transition: opacity .15s ease-in-out, color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;

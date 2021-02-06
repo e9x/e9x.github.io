@@ -349,6 +349,14 @@ var add = Symbol(),
 			return Reflect.apply(CanvasRenderingContext2D.prototype[label], cheat.ctx, args);
 		},
 		input: require('./input.js'),
+		instruct: parent.document.querySelector('#instructionHolder'),
+		has_instruct: str => cheat.instruct.textContent.trim().toLowerCase().includes(str),
+		process_interval: setInterval(() => {
+			if(cheat.has_instruct('connection banned'))clearInterval(cheat.process_interval), cheat.config.game.proxy = true, cheat.ui.data.config.save(), parent.location.assign('https://krunker.io');
+			else if(cheat.has_instruct('game is full'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
+			else if(cheat.has_instruct('disconnected'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
+			else if(cheat.has_instruct('click to play') && cheat.config.game.auto_respawn && (!cheat.player || !cheat.player[cheat.add] || !cheat.player[cheat.add].active || !cheat.player[cheat.add].health))cheat.controls.toggle(true);
+		}, 100),
 	};
 
 cheat.util.cheat = cheat;

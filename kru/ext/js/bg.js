@@ -1,11 +1,15 @@
 'use strict';
 var sploit = {
 		updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
-		write_delay: 3000,
+		write_interval: 3000,
+		update_interval: 5000,
 		active: true,
+		update_prompted: false,
 	},
-	check_for_updates = (manifest, updates) => {
-		var current_ver =+(manifest.version.replace(/\D/g, '')),
+	check_for_updates = async manifest => {
+		var manifest = await fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()),
+			updates = await fetch(sploit.updates).then(res => res.json()),
+			current_ver =+(manifest.version.replace(/\D/g, '')),
 			latest_ver = +(updates.extension.version.replace(/\D/g, ''));
 		
 		if(current_ver > latest_ver)return console.info('sploit is newer than the latest release');
@@ -14,7 +18,9 @@ var sploit = {
 		
 		console.warn('sploit is out-of-date!');
 		
-		if(!confirm('Sploit is out-of-date (' + updates.extension.version + ' available), do you wish to update?'))return;
+		if(sploit.update_prompted || !confirm('Sploit is out-of-date (' + updates.extension.version + ' available), do you wish to update?'))return sploit.update_prompted = true;
+		
+		sploit.update_prompted = true;
 		
 		// add url to download queue
 		chrome.downloads.download({
@@ -66,7 +72,9 @@ fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()).then(manif
 	}));
 	
 	// 3. check for updates
-	fetch(sploit.updates).then(res => res.json()).then(updates => check_for_updates(manifest, updates));
+	check_for_updates();
+	
+	setInterval(check_for_updates, sploit.update_interval);
 	
 	// 4. bundle then listen on interface port
 	bundle().then(() => chrome.extension.onConnect.addListener(port => {
@@ -96,5 +104,5 @@ fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()).then(manif
 		});
 	}));
 
-	setInterval(bundle, sploit.write_delay);
+	setInterval(bundle, sploit.write_interval);
 });

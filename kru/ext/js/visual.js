@@ -258,7 +258,6 @@ module.exports = cheat => {
 			[['#BBB', 'Player: '], ['#FFF', cheat.player && cheat.player[cheat.add] && cheat.player[cheat.add].pos ? cheat.v3.map(axis => axis + ': ' + cheat.player[cheat.add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
 			[['#BBB', 'Target: '], ['#FFF', cheat.target && cheat.target[cheat.add] && cheat.target[cheat.add].active ? cheat.target.alias + ', ' + cheat.v3.map(axis => axis + ': ' + cheat.target[cheat.add].pos[axis].toFixed(2)).join(', ') : 'N/A']],
 			[['#BBB', 'Hacker: '], [parent.activeHacker ? '#0F0' : '#F00', parent.activeHacker ? 'TRUE' : 'FALSE']],
-			[['#BBB', 'Aiming: '], [cheat.player && cheat.player[cheat.add] && cheat.player[cheat.add].aiming ? '#0F0' : '#F00', cheat.player && cheat.player[cheat.add] && cheat.player[cheat.add].aiming ? 'TRUE' : 'FALSE']],
 		];
 		
 		cheat.draw_text(lines, 15, ((cheat.cas.height / 2) - (lines.length * 14)  / 2), 14);
