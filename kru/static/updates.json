@@ -4,6 +4,10 @@
 		"version": "1.5.1",
 		"install": "https://github.com/e9x/e9x.github.io/releases/download/1.5.1/ext.zip"
 	},
+	"userscript": {
+		"version": "1.5.1",
+		"install": "https://greasyfork.org/en/scripts/421228-sploit"
+	},
 	"client": {
 		"version": "8.8.7",
 		"install": {

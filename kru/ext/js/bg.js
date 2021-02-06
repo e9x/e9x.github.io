@@ -6,7 +6,9 @@ var sploit = {
 		active: true,
 		update_prompted: false,
 	},
-	check_for_updates = async manifest => {
+	check_for_updates = async () => {
+		if(sploit.update_prompted)return;
+		
 		var manifest = await fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()),
 			updates = await fetch(sploit.updates).then(res => res.json()),
 			current_ver =+(manifest.version.replace(/\D/g, '')),
@@ -18,7 +20,7 @@ var sploit = {
 		
 		console.warn('sploit is out-of-date!');
 		
-		if(sploit.update_prompted || !confirm('Sploit is out-of-date (' + updates.extension.version + ' available), do you wish to update?'))return sploit.update_prompted = true;
+		if(!confirm('Sploit is out-of-date (' + updates.extension.version + ' available), do you wish to update?'))return sploit.update_prompted = true;
 		
 		sploit.update_prompted = true;
 		

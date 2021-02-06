@@ -583,3 +583,36 @@ ofetch('https://api.sys32.dev/token').then(res => res.json()).then(data => ofetc
 	
 	cheat.wf(() => document.readyState == 'complete').then(() => new parent.Function('WP_fetchMMToken', 'WebSocket', 'fetch', 'ssd', 'Proxy', vries)(new Promise(r => r(data.token)), cheat.config.game.proxy ? class extends WebSocket { constructor(url, opts){ super('wss://krunker.space/c5580cf2af/ws', encodeURIComponent(btoa(url))) } } : WebSocket, ofetch, cheat.storage, class { constructor(input){ return input } }));
 }));
+
+if(parent.location == window.location){ // running in tampermonkey
+	var sploit = {
+			updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
+			write_interval: 3000,
+			update_interval: 5000,
+			active: true,
+			update_prompted: false,
+		},
+		check_for_updates = async () => {
+			if(sploit.update_prompted)return;
+			
+			var updates = await fetch(sploit.updates).then(res => res.json()),
+				current_ver =+(manifest.version.replace(/\D/g, '')),
+				latest_ver = +(updates.extension.version.replace(/\D/g, ''));
+			
+			if(current_ver > latest_ver)return console.info('sploit is newer than the latest release');
+			
+			if(current_ver == latest_ver)return console.info('sploit is up-to-date');
+			
+			console.warn('sploit is out-of-date!');
+			
+			if(!confirm('Sploit is out-of-date (' + updates.userscript.version + ' available), do you wish to update?'))return sploit.update_prompted = true;
+			
+			sploit.update_prompted = true;
+			
+			window.open(updates.userscript.install);
+		};
+	
+	check_for_updates();
+	
+	setInterval(check_for_updates, sploit.update_interval);
+}
