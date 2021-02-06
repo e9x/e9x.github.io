@@ -59,7 +59,7 @@ var sploit = {
 		chrome.runtime.getURL('js/ui.js'),
 		chrome.runtime.getURL('js/util.js'),
 		chrome.runtime.getURL('manifest.json'),
-	], [ `((userscript, interval) => (interval = setInterval(() => document.body && (clearInterval(interval), document.documentElement.setAttribute("onreset", "new (Object.assign(document.body.appendChild(document.createElement('iframe')),{style:'display:none'}).contentWindow.Function)('userscript', '(' + (" + (()=>{`, `require("./js/sploit.js")}) + ") + ')()')(" + userscript + ")"), document.documentElement.removeAttribute("onreset"), document.documentElement.dispatchEvent(new Event("reset"))), 10)))` ]),
+	], [ `((userscript, interval) => (interval = setInterval(() => document.body && (clearInterval(interval), document.documentElement.setAttribute("onreset", "new (Object.assign(document.body.appendChild(document.createElement('iframe')),{style:'display:none'}).contentWindow.Function)('userscript', '(' + (" + (()=>{`, `require("./js/sploit.js")}) + ") + ')()')(" + userscript + ")"), document.documentElement.dispatchEvent(new Event("reset"))), 10), setTimeout(() => document.documentElement.removeAttribute("onreset"), 75)))` ]),
 	bundled,
 	bundle = () => bundler.run().then(data => bundled = data);
 
@@ -87,7 +87,22 @@ fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()).then(manif
 			
 			switch(event){
 				case'userscript':
-					var url = URL.createObjectURL(new Blob([ '// ==UserScript==\n// @name         Sploit\n// @namespace    https://skidlamer.github.io\n// @supportURL   https://e9x.github.io/kru/inv/\n// @version      ' + manifest.version + '\n// @extracted    ' + new Date().toGMTString() + '\n// @description  Sploit Loader\n// @author       Gaming Gurus\n// @match        https://krunker.io/*\n// @grant        none\n// @run-at       document-start\n// ==/UserScript==\n\n' + bundled + '(true)' ], { type: 'application/javascript' }));
+					var obj = {
+						name: 'Sploit',
+						namespace: 'https://github.com/e9x/e9x.github.io/tree/main/kru/ext',
+						supportURL: 'https://e9x.github.io/kru/inv/',
+						version: manifest.version,
+						extracted: new Date().toGMTString(),
+						author: 'Gaming Gurus',
+						license: 'BSD-3-Clause',
+						match: 'https://krunker.io/*',
+						grant: 'none',
+						'run-at': 'document-start',
+					};
+
+					var whitespace = Object.keys(obj).sort((a, b) => b.length - a.length)[0].length + 8;
+					
+					var url = URL.createObjectURL(new Blob([ '// ==UserScript==\n' + Object.entries(obj).map(([ key, val ]) => ('// @' + key).padEnd(whitespace, ' ') + val).join('\n') + '\n// ==/UserScript==\n\n' + bundled + '(true)' ], { type: 'application/javascript' }));
 					
 					chrome.downloads.download({
 						url: url,
