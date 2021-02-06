@@ -165,6 +165,7 @@ module.exports = cheat => {
 				obj.size.x &&
 				obj.size.y && 
 				obj.size.z &&
+				obj.size.x < 100 &&
 				obj.pos.y);
 			
 			cm.dims = { min: { x: 0, y: 0, z: 0 }, max: { x: 0, y: 0, z: 0 } };
