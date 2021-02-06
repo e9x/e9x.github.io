@@ -349,8 +349,7 @@ var add = Symbol(),
 			return Reflect.apply(CanvasRenderingContext2D.prototype[label], cheat.ctx, args);
 		},
 		input: require('./input.js'),
-		instruct: parent.document.querySelector('#instructionHolder'),
-		has_instruct: str => cheat.instruct.textContent.trim().toLowerCase().includes(str),
+		has_instruct: str => parent.document.querySelector('#instructionHolder').textContent.trim().toLowerCase().includes(str),
 		process_interval: setInterval(() => {
 			if(cheat.has_instruct('connection banned'))clearInterval(cheat.process_interval), cheat.config.game.proxy = true, cheat.ui.data.config.save(), parent.location.assign('https://krunker.io');
 			else if(cheat.has_instruct('game is full'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
@@ -598,7 +597,7 @@ if(parent.location == window.location){ // running in tampermonkey
 			
 			var updates = await fetch(sploit.updates).then(res => res.json()),
 				current_ver =+(manifest.version.replace(/\D/g, '')),
-				latest_ver = +(updates.extension.version.replace(/\D/g, ''));
+				latest_ver = +(updates.userscript.version.replace(/\D/g, ''));
 			
 			if(current_ver > latest_ver)return console.info('sploit is newer than the latest release');
 			
