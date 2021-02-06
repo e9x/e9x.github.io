@@ -603,8 +603,6 @@ fetch(new URL('/token', cheat.api)).then(res => res.json()).then(data => fetch(n
 }));
 
 if(module.userscript){ // running in tampermonkey
-	console.log('in userscript');
-	
 	var sploit = {
 			updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
 			write_interval: 3000,
