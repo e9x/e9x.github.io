@@ -18,7 +18,9 @@
 	},
 	"latest": {
 		"working": true,
-		"version": "8.8.7",
+		"major": "8.8.7",
+		"patch": "8.8.7",
+		"url": "https://github.com/vibedivide/sploit/releases/",
 		"installers": {
 			"Windows_NT": "none",
 			"Linux": "none",
