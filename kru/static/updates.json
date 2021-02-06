@@ -15,5 +15,14 @@
 			"Linux": "none",
 			"Darwin": "none"
 		}
+	},
+	"latest": {
+		"working": true,
+		"version": "8.8.7",
+		"install": {
+			"Windows_NT": "none",
+			"Linux": "none",
+			"Darwin": "none"
+		}
 	}
 }
