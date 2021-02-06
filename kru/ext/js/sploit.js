@@ -90,7 +90,7 @@ var add = Symbol(),
 				status: 'off',
 				walls: {
 					status: false,
-					value: 25,
+					value: 1,
 				},
 			},
 			game: {
