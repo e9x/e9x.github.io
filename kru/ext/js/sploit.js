@@ -357,6 +357,7 @@ var add = Symbol(),
 			else if(cheat.has_instruct('disconnected'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
 			else if(cheat.has_instruct('click to play') && cheat.config.game.auto_respawn && (!cheat.player || !cheat.player[cheat.add] || !cheat.player[cheat.add].active || !cheat.player[cheat.add].health))cheat.controls.toggle(true);
 		}, 100),
+		api: 'https://api.brownstation.pw/',
 	};
 
 cheat.util.cheat = cheat;
@@ -577,7 +578,7 @@ var ofetch = parent.fetch;
 
 parent.fetch = _ => new Promise(r => r({ json: _ => new Promise(r => r({})), text: _ => new Promise(r => r('window.initWASM=_=>_')), arrayBuffer: _ => new Promise(r => r(new ArrayBuffer())) }));
 
-ofetch('https://api.sys32.dev/token').then(res => res.json()).then(data => ofetch('https://api.sys32.dev/data/game.' + data.build + '.js').then(res => res.text()).then(vries => {
+ofetch(new URL('/token', cheat.api)).then(res => res.json()).then(data => ofetch(new URL('/data/game.' + data.build + '.js', cheat.api)).then(res => res.text()).then(vries => {
 	cheat.patches.forEach(([ regex, replace ]) => vries = vries.replace(regex, replace));
 	cheat.find_vars.forEach(([ name, regex, index ]) => cheat.vars[name] = (vries.match(regex)||[])[index]);
 	
