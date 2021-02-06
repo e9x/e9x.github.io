@@ -349,7 +349,7 @@ var add = Symbol(),
 			return Reflect.apply(CanvasRenderingContext2D.prototype[label], cheat.ctx, args);
 		},
 		input: require('./input.js'),
-		has_instruct: str => parent.document.querySelector('#instructionHolder').textContent.trim().toLowerCase().includes(str),
+		has_instruct: (str, inst) => (inst = parent.document.querySelector('#instructionHolder'), inst && inst.textContent.trim().toLowerCase().includes(str)),
 		process_interval: setInterval(() => {
 			if(cheat.has_instruct('connection banned'))clearInterval(cheat.process_interval), cheat.config.game.proxy = true, cheat.ui.data.config.save(), parent.location.assign('https://krunker.io');
 			else if(cheat.has_instruct('game is full'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
