@@ -47,12 +47,12 @@ module.exports = (cheat, data) => {
 				y: cheat.util.normal_radian(cheat.round(yDire % cheat.util.pi2, 3)) || 0,
 			};
 		
-		if((cheat.config.aim.status == 'silent' || cheat.config.aim.status == 'triggerbot') && cheat.player[cheat.add].aiming && cheat.raycaster.intersectObjects(pm, true).length)data[keys.shoot] = cheat.player[cheat.vars.didShoot] ? 0 : 1;
+		if((cheat.config.aim.status == 'silent' && !cheat.config.aim.smooth.status || ['silent', 'triggerbot'].includes(cheat.config.aim.status) && cheat.player[cheat.add].aiming && cheat.raycaster.intersectObjects(pm, true).length) && cheat.player[cheat.add].aiming)data[keys.shoot] = cheat.player[cheat.add].shot ? 0 : 1;
 		
 		// if fully aimed or weapon cant even be aimed or weapon is melee and nearby, shoot
 		// if(cheat.config.aim.status == 'silent' && !cheat.config.aim.smooth.status && cheat.player[cheat.add].aiming)data[keys.shoot] = 1;
 		
-		var do_aim = cheat.config.aim.status == 'silent' || cheat.config.aim.status == 'assist' && (cheat.controls[cheat.vars.mouseDownR] || cheat.controls.keys[cheat.controls.binds.aimKey.val]);
+		var do_aim = cheat.config.aim.status == 'silent' && !data[keys.reload] || cheat.config.aim.status == 'assist' && (cheat.controls[cheat.vars.mouseDownR] || cheat.controls.keys[cheat.controls.binds.aimKey.val]);
 		
 		switch(cheat.config.aim.status){
 			case'assist':
@@ -71,12 +71,14 @@ module.exports = (cheat, data) => {
 				break
 			case'silent':
 				
-				if(do_aim && cheat.config.aim.smooth.status)data[keys.scope] = 1, smooth(cheat, {
-					xD: rot.x,
-					yD: rot.y,
-				}); else if(do_aim){
-					data[keys.xdir] = rot.x * 1000;
-					data[keys.ydir] = rot.y * 1000;
+				if(do_aim){
+					data[keys.scope] = 1;
+					
+					if(cheat.config.aim.smooth.status)smooth(cheat, { xD: rot.x, yD: rot.y });
+					else {
+						data[keys.xdir] = rot.x * 1000;
+						data[keys.ydir] = rot.y * 1000;
+					}
 				}
 				
 				break
