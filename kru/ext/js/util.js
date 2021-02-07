@@ -97,3 +97,5 @@ exports.lineInRect = (lx1, lz1, ly1, dx, dz, dy, x1, z1, y1, x2, z2, y2) => {
 	
 	return (tmax < 0 || tmin > tmax) ? false : tmin;
 };
+
+exports.getAngleDst = (a1, a2) => Math.atan2(Math.sin(a2 - a1), Math.cos(a1 - a2));

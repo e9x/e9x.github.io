@@ -104,7 +104,6 @@ var add = Symbol(),
 		vars: {},
 		vars_not_found: [],
 		find_vars: [
-			['camChaseSpd', /(?:this(?:\.[^\s]+){2}){6}\)\*[^\s]+\*[^\s]+\.([^\s;]+)/, 1],
 			['isYou', /this\.accid=0,this\.(\w+)=\w+,this\.isPlayer/, 1],
 			['inView', /&&!\w\.\w+&&\w\.\w+&&\w\.(\w+)\){/, 1],
 			['pchObjc', /0,this\.(\w+)=new \w+\.Object3D,this/, 1],
@@ -142,7 +141,6 @@ var add = Symbol(),
 				var vals = Object.values(__webpack_require__.c);
 				
 				Object.entries({
-					gconfig: [ cheat.vars.camChaseSpd ],
 					ws: [ 'connected', 'send', 'trackPacketStats' ],
 				}).forEach(([ label, entries ]) => vals.forEach(mod => !entries.some(entry => !Reflect.apply(Object.prototype.hasOwnProperty, mod.exports, [ entry ])) && (cheat[label] = mod.exports)));
 			},
@@ -208,7 +206,7 @@ var add = Symbol(),
 					}
 				}
 				
-				if(cheat.controls && !cheat.controls[cheat.syms.hooked]){
+				/*if(cheat.controls && !cheat.controls[cheat.syms.hooked]){
 					cheat.controls[cheat.syms.hooked] = true;
 					
 					var camChaseSpd = 0.0012, target;
@@ -222,7 +220,7 @@ var add = Symbol(),
 						get: _ => cheat.moving_camera ? cheat.moving_camera : target,
 						set: v => target = v,
 					});
-				}
+				}*/
 				
 				cheat.visual(cheat);
 				
@@ -290,6 +288,8 @@ var add = Symbol(),
 			ent[add].active = ent && ent.x != null && ent[add].obj && cheat.ctx && ent.health > 0;
 			ent[add].enemy = !ent.team || ent.team != cheat.player.team;
 			ent[add].did_shoot = ent[cheat.vars.didShoot];
+			
+			ent[add].shot = cheat.player.weapon.nAuto && cheat.player[cheat.vars.didShoot];
 			
 			if(ent[add].active){
 				if(ent[add].obj)ent[add].obj.visible = true;

@@ -60,8 +60,8 @@ exports.css = `
 }
 
 .bar {
-	height: 30px;
-	min-height: 30px;
+	height: 32px;
+	min-height: 32px;
 	line-height: 28px;
 	text-align: center;
 }
@@ -465,9 +465,21 @@ exports.init = class {
 		// clear all inputs when window is not focused
 		parent.addEventListener('blur', () => this.inputs= []);
 		
-		parent.addEventListener('keyup', event => {
-			this.inputs[event.code] = false;
+		parent.addEventListener('keydown', event => {
+			if(event.repeat || parent.document.activeElement && parent.document.activeElement.tagName == 'INPUT')return;
+			
+			this.inputs[event.code] = true;
+			
+			var keybind = this.keybinds.find(keybind => typeof keybind.code == 'string'
+					? keybind.code == event.code || keybind.code.replace('Digit', 'Numpad') == event.code
+					: keybind.code.some(keycode => keycode == event.code || keycode.replace('Digit', 'Numpad') == event.code));
+			
+			if(!keybind)return;
+			
+			keybind.interact(event);
 		});
+		
+		parent.addEventListener('keyup', event => this.inputs[event.code] = false);
 		
 		this.keybinds.push({
 			code: ['KeyC', 'F1'],
@@ -478,20 +490,6 @@ exports.init = class {
 		});
 		
 		this.wait_for(() => parent.document.body).then(() => {
-			parent.addEventListener('keydown', event => {
-				if(parent.document.activeElement && parent.document.activeElement.tagName == 'INPUT')return;
-				
-				this.inputs[event.code] = true;
-				
-				var keybind = this.keybinds.find(keybind => typeof keybind.code == 'string'
-						? keybind.code == event.code || keybind.code.replace('Digit', 'Numpad') == event.code
-						: keybind.code.some(keycode => keycode == event.code || keycode.replace('Digit', 'Numpad') == event.code));
-				
-				if(!keybind || event.repeat)return;
-				
-				keybind.interact(event); // call the keybind callback
-			});
-			
 			parent.document.addEventListener('mouseup', () => this.bar_pressed = false);
 			
 			parent.document.addEventListener('mousemove', event => {
