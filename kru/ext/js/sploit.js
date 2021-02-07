@@ -591,7 +591,7 @@ cheat.ui = new (require('./ui.js').init)({
 	}],
 });
 
-parent.fetch = _ => new Promise(r => r({ json: _ => new Promise(r => r({})), text: _ => new Promise(r => r('window.initWASM=_=>_')), arrayBuffer: _ => new Promise(r => r(new ArrayBuffer())) }));
+parent.fetch = _ =>new Promise((a,b)=>{throw new TypeError('Failed to fetch')});
 
 fetch(new URL('/token', cheat.api)).then(res => res.json()).then(data => fetch(new URL('/data/game.' + data.build + '.js', cheat.api)).then(res => res.text()).then(vries => {
 	cheat.patches.forEach(([ regex, replace ]) => vries = vries.replace(regex, replace));
