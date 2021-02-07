@@ -71,7 +71,7 @@ module.exports = (cheat, data) => {
 				break
 			case'silent':
 				
-				if(do_aim && cheat.config.aim.smooth.status)smooth(cheat, {
+				if(do_aim && cheat.config.aim.smooth.status)data[keys.scope] = 1, smooth(cheat, {
 					xD: rot.x,
 					yD: rot.y,
 				}); else if(do_aim){
