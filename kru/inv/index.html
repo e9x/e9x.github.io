@@ -31,24 +31,21 @@
 
 body {
 	margin: 0px;
-	background: no-repeat url('./wp.jpg') 0px 0px / cover fixed;
+	background: url('./wp.jpg') center / cover fixed;
 	font-family: Whitney;
+	height: 100vh;
+	display: flex;
 }
 
 .wrapper {
+	margin: auto;
+}
+
+.guild-invite {
+	width: 432px;
 	background: #2f3136;
 	border-radius: 4px;
 	padding: 16px;
-	position: absolute;
-	display: block;
-	margin: auto;
-	top: 0px;
-	bottom: 0px;
-	left: 0px;
-	right: 0px;
-	width: 432px;
-	height: 106px;
-	box-sizing: border-box;
 	user-select: none;
 }
 
@@ -66,22 +63,17 @@ body {
 	flex-wrap: nowrap;
 	display: flex;
 	align-items: stretch;
-	-webkit-box-align: stretch;
 	justify-content: center;
 	text-indent: 0;
 }
 
 .guild-icon {
-	background-color: #333;
+	background: #333 center / cover;
 	margin-right: 16px;
-	flex: 0 0 auto;
 	width: 50px;
 	height: 50px;
 	border-radius: 15px;
 	position: relative;
-	background-clip: padding-box;
-	background-position: 50%;
-	background-size: 100% 100%;
 }
 
 .inv-desc {
@@ -155,7 +147,10 @@ body {
 	margin: 0px;
 }
 
-.guildDetail {
+.counts {
+	display: flex;
+    align-items: center;
+	font-weight: 600;
 	margin: 0;
 	font-size: 14px;
 	white-space: nowrap;
@@ -165,14 +160,7 @@ body {
 	line-height: 16px;
 }
 
-.statusCounts {
-	display: flex;
-    -webkit-box-align: center;
-    align-items: center;
-	font-weight: 600;
-}
-
-.status {
+.counts .status {
 	display: block;
 	margin-right: 4px;
 	width: 8px;
@@ -182,15 +170,15 @@ body {
 	font-style: italic;
 }
 
-.statusOnline {
+.counts .online {
 	background: #43b581;
 }
 
-.statusOffline {
+.counts .offline {
     background: #747f8d;
 }
 
-.count-30T-5k {
+.count {
 	-webkit-box-flex: 0;
 	flex: 0 1 auto;
 	margin-right: 8px;
@@ -210,12 +198,10 @@ body {
 		<div class='wrapper'>
 			<div class='inv-desc'>You've been invited to join a server</div>
 			<div class='content'>
-				<div class='guild-icon' style='background-image: url()'></div>
+				<div class='guild-icon'></div>
 				<div class='guild-info' style='flex: 1 1 auto;'>
 					<div class='guild-name'></div>
-					<div class='colorStandard size14 guildDetail'>
-						<div class='statusCounts'><i class='statusOnline status'></i><span class='count-30T-5k online-count'>0 Online</span><i class='statusOffline status'></i><span class='count-30T-5k offline-count'>0 Members</span></div>
-					</div>
+					<div class='counts'><i class='online status'></i><span class='count online-count'>1000 Online</span><i class='offline status'></i><span class='count offline-count'>1000 Members</span></div>
 				</div><button type='button' class='button join-button'>
 					<div class='button-label'>Join</div>
 				</button>
