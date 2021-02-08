@@ -21,9 +21,9 @@ var obj_mat = (cheat, obj) => {
 	ent_visual = (cheat, ent) => {
 		if(!ent[cheat.add] || !ent[cheat.add].active || !ent[cheat.add].frustum || ent[cheat.add].is_you)return;
 		
-		var src_pos = cheat.wrld2scrn(ent[cheat.add].pos),
-			src_pos_crouch = cheat.wrld2scrn(ent[cheat.add].pos, ent.height - ent[cheat.add].crouch * 3),
-			esp_width = ~~((src_pos.y - cheat.wrld2scrn(ent[cheat.add].pos, ent.height).y) * 0.7),
+		var src_pos = cheat.util.pos2d(ent[cheat.add].pos),
+			src_pos_crouch = cheat.util.pos2d(ent[cheat.add].pos, ent.height - ent[cheat.add].crouch * 3),
+			esp_width = ~~((src_pos.y - cheat.util.pos2d(ent[cheat.add].pos, ent.height).y) * 0.7),
 			esp_height = src_pos.y - src_pos_crouch.y,
 			esp_box_y = src_pos.y - esp_height,
 			// teammate = green, enemy = red, risk + enemy = orange

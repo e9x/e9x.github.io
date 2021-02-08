@@ -1,26 +1,22 @@
 'use strict';
 var sploit = {
 		updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
-		write_interval: 3000,
+		write_interval: 5000,
 		update_interval: 5000,
 		active: true,
 		update_prompted: false,
 	},
-	check_for_updates = async () => {
+	check_for_updates = manifest => fetch(sploit.updates).then(res => res.json()).then(updates => {
 		if(sploit.update_prompted)return;
 		
-		var manifest = await fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()),
-			updates = await fetch(sploit.updates).then(res => res.json()),
-			current_ver = +(manifest.version.replace(/\D/g, '')),
+		var current_ver = +(manifest.version.replace(/\D/g, '')),
 			latest_ver = +(updates.extension.version.replace(/\D/g, ''));
 		
-		if(current_ver > latest_ver)return console.info('sploit is newer than the latest release');
+		// updated or past latest release
+		if(current_ver >= latest_ver)return;
 		
-		if(current_ver == latest_ver)return console.info('sploit is up-to-date');
-		
-		console.warn('sploit is out-of-date!');
-		
-		if(!confirm('Sploit is out-of-date (' + updates.extension.version + ' available), do you wish to update?'))return sploit.update_prompted = true;
+		// outdated
+		if(!confirm('Sploit is outdated (' + updates.extension.version + ' available), do you wish to update?'))return sploit.update_prompted = true;
 		
 		sploit.update_prompted = true;
 		
@@ -32,12 +28,13 @@ var sploit = {
 			// take user to chrome://extensions
 			
 			chrome.tabs.create({ url: 'chrome://extensions' });
+			
 			alert('successfully started download, drag the sploit-ext.zip file over chrome://extensions');
 			
 			// remove extension
 			chrome.management.uninstallSelf();
 		});
-	},
+	}),
 	_bundler = class {
 		constructor(modules, padding = ['', '']){
 			this.modules = modules;
@@ -59,9 +56,11 @@ var sploit = {
 		chrome.runtime.getURL('js/ui.js'),
 		chrome.runtime.getURL('js/util.js'),
 		chrome.runtime.getURL('manifest.json'),
-	], [ `((userscript, interval) => (interval = setInterval(() => document.body && (clearInterval(interval), document.documentElement.setAttribute("onreset", "new (Object.assign(document.body.appendChild(document.createElement('iframe')),{style:'display:none'}).contentWindow.Function)('userscript', '(' + (" + (()=>{`, `require("./js/sploit.js")}) + ") + ')()')(" + userscript + ")"), document.documentElement.dispatchEvent(new Event("reset"))), 10), setTimeout(() => document.documentElement.removeAttribute("onreset"), 75)))` ]),
+	], [ '', 'require("./js/sploit.js")' ]),
 	bundled,
-	bundle = () => bundler.run().then(data => bundled = data);
+	bundle = () => bundler.run().then(data => bundled = 'new(Object.assign(document.documentElement.appendChild(document.createElement("iframe")),{style:"display:none"}).contentWindow.Function)("userscript","nrequire","("+(_=>{' + data + '})+")()")');
+
+// .replace(/(?<![a-zA-Z0-9])var /g, 'let ')
 
 fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()).then(manifest => {
 	// 1. prevent krunker wasm from being loaded
@@ -69,14 +68,14 @@ fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()).then(manif
 	
 	// 2. inject sploit code
 	chrome.webNavigation.onCompleted.addListener((details, url = new URL(details.url)) => sploit.active && url.host.endsWith('krunker.io') && url.pathname == '/' && chrome.tabs.executeScript(details.tabId, {
-		code: bundled + '(false)',
+		code: 'document.documentElement.setAttribute("onreset",' + bundler.wrap(bundled + '(false)') + '),document.documentElement.dispatchEvent(new Event("reset")),setTimeout(_=>document.documentElement.removeAttribute("onreset"),75)',
 		runAt: 'document_start',
 	}));
 	
 	// 3. check for updates
-	check_for_updates();
+	check_for_updates(manifest);
 	
-	setInterval(check_for_updates, sploit.update_interval);
+	setInterval(() => check_for_updates(manifest), sploit.update_interval);
 	
 	// 4. bundle then listen on interface port
 	bundle().then(() => chrome.extension.onConnect.addListener(port => {
@@ -102,7 +101,7 @@ fetch(chrome.runtime.getURL('manifest.json')).then(res => res.json()).then(manif
 
 					var whitespace = Object.keys(obj).sort((a, b) => b.length - a.length)[0].length + 8;
 					
-					var url = URL.createObjectURL(new Blob([ '// ==UserScript==\n' + Object.entries(obj).map(([ key, val ]) => ('// @' + key).padEnd(whitespace, ' ') + val).join('\n') + '\n// ==/UserScript==\n\n' + bundled + '(true)' ], { type: 'application/javascript' }));
+					var url = URL.createObjectURL(new Blob([ '// ==UserScript==\n' + Object.entries(obj).map(([ key, val ]) => ('// @' + key).padEnd(whitespace, ' ') + val).join('\n') + '\n// ==/UserScript==\n\n' + bundled + '(true,typeof require=="function"?require:null)' ], { type: 'application/javascript' }));
 					
 					chrome.downloads.download({
 						url: url,

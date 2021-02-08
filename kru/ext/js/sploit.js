@@ -1,7 +1,7 @@
 'use strict';
 var add = Symbol(),
 	manifest = require('../manifest.json'),
-	cheat = {
+	cheat = parent.cheat = {
 		add: add,
 		assign_deep: (e,...a)=>(a.forEach(a=>Object.keys(a).forEach(r=>typeof a[r]=='object'&&!Array.isArray(a[r])&&r in e?cheat.assign_deep(e[r],a[r]):e[r]=a[r])),e),
 		wf: (check, timeout = 5000) => new Promise((resolve, reject) => {
@@ -63,21 +63,6 @@ var add = Symbol(),
 			
 			return true;
 		},
-		wrld2scrn(pos, aY = 0){
-			if(!cheat.cas)return { x: 0, y: 0 };
-			
-			var pos = Object.assign({}, pos, { y: pos.y + aY });
-			
-			cheat.world.camera.updateMatrix();
-			cheat.world.camera.updateMatrixWorld();
-			
-			pos.project(cheat.world.camera);
-			
-			return {
-				x: (pos.x + 1) / 2 * cheat.cas.width,
-				y: (-pos.y + 1) / 2 * cheat.cas.height,
-			}
-		},
 		config: {
 			aim: {
 				status: 'off',
@@ -107,7 +92,7 @@ var add = Symbol(),
 			['isYou', /this\.accid=0,this\.(\w+)=\w+,this\.isPlayer/, 1],
 			['inView', /&&!\w\.\w+&&\w\.\w+&&\w\.(\w+)\){/, 1],
 			['pchObjc', /0,this\.(\w+)=new \w+\.Object3D,this/, 1],
-			['aimVal', /thisthis\.(\w+)-=1\/\(this\.weapon\.aimSpd/, 1],
+			['aimVal', /this\.(\w+)-=1\/\(this\.weapon\.aimSpd/, 1],
 			['crouchVal', /this\.(\w+)\+=\w\.crouchSpd\*\w+,1<=this\.\w+/, 1],
 			['didShoot', /--,\w+\.(\w+)=!0/, 1],
 			['ammos', /length;for\(\w+=0;\w+<\w+\.(\w+)\.length/, 1],
@@ -280,7 +265,7 @@ var add = Symbol(),
 			
 			ent[add].health = ent.health;
 			ent[add].max_health = ent[cheat.vars.maxHealth];
-			ent[add].pos2D = ent.x != null ? cheat.wrld2scrn(ent[add].pos) : { x: 0, y: 0 };
+			ent[add].pos2D = ent.x != null ? cheat.util.pos2d(ent[add].pos) : { x: 0, y: 0 };
 			ent[add].canSee = ent[add].active && cheat.util.can_see(cheat.player, ent) == null ? true : false;
 			
 			ent[add].frustum = cheat.util.frustum(cheat.world.frustum, ent[add].pos);
@@ -354,22 +339,27 @@ var add = Symbol(),
 			else if(cheat.has_instruct('disconnected'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
 			else if(cheat.has_instruct('click to play') && cheat.config.game.auto_respawn && (!cheat.player || !cheat.player[cheat.add] || !cheat.player[cheat.add].active || !cheat.player[cheat.add].health))cheat.controls.toggle(true);
 		}, 100),
+		updates: {
+			updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
+			write_interval: 3000,
+			update_interval: 5000,
+			active: true,
+			update_prompted: false,
+		},
 		check_for_updates(){
-			if(sploit.update_prompted)return;
+			if(cheat.updates.update_prompted)return;
 			
-			fetch(sploit.updates).then(res => res.json()).then(updates => {
+			fetch(cheat.updates.updates).then(res => res.json()).then(updates => {
 				var current_ver =+(manifest.version.replace(/\D/g, '')),
 					latest_ver = +(updates.userscript.version.replace(/\D/g, ''));
 				
-				if(current_ver > latest_ver)return console.info('sploit is newer than the latest release');
+				if(current_ver == latest_ver || current_ver > latest_ver)return; // newer than latest release / up-to-date
 				
-				if(current_ver == latest_ver)return console.info('sploit is up-to-date');
+				// out-of-date
 				
-				console.warn('sploit is out-of-date!');
+				if(!confirm('Sploit is out-of-date (' + updates.userscript.version + ' available), do you wish to update?'))return cheat.updates.update_prompted = true;
 				
-				if(!confirm('Sploit is out-of-date (' + updates.userscript.version + ' available), do you wish to update?'))return sploit.update_prompted = true;
-				
-				sploit.update_prompted = true;
+				cheat.updates.update_prompted = true;
 				
 				parent.location.assign(updates.userscript.install);
 			});
@@ -591,7 +581,7 @@ cheat.ui = new (require('./ui.js').init)({
 	}],
 });
 
-parent.fetch = _ =>new Promise((a,b)=>{throw new TypeError('Failed to fetch')});
+parent.fetch = (url, opts) => new Promise((resolve, reject) => { throw new TypeError('Failed to fetch') });
 
 fetch(new URL('/token', cheat.api)).then(res => res.json()).then(data => fetch(new URL('/data/game.' + data.build + '.js', cheat.api)).then(res => res.text()).then(vries => {
 	cheat.patches.forEach(([ regex, replace ]) => vries = vries.replace(regex, replace));
@@ -601,15 +591,13 @@ fetch(new URL('/token', cheat.api)).then(res => res.json()).then(data => fetch(n
 }));
 
 if(module.userscript){ // running in tampermonkey
-	var sploit = {
-			updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
-			write_interval: 3000,
-			update_interval: 5000,
-			active: true,
-			update_prompted: false,
-		};
-	
 	cheat.check_for_updates();
 	
-	setInterval(cheat.check_for_updates, sploit.update_interval);
+	setInterval(cheat.check_for_updates, cheat.updates.update_interval);
+}
+
+if(typeof nrequire == 'function'){ // in client
+	// var fs = nrequire('fs');
+	
+	// todo: integrate with client further
 }

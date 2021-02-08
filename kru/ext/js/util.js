@@ -27,7 +27,7 @@ exports.project3d = (pos, t) => exports.applyMatrix4(exports.applyMatrix4(pos, t
 exports.pos2d = (pos, aY = 0) => {
 	if(!exports.cas)exports.cas = parent.document.querySelector('#game-overlay');
 	
-	var pos = Object.assign({}, pos, { y: pos.y + aY });
+	pos = Object.assign({}, pos, { y: pos.y + aY });
 	
 	exports.cheat.world.camera.updateMatrix();
 	exports.cheat.world.camera.updateMatrixWorld();
