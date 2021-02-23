@@ -2,17 +2,17 @@ var smooth = (cheat, target) => {
 	var aj = 17,
 		turn = 0.0022,
 		speed = (50 - cheat.config.aim.smooth.value) / 5000,
-		ak = cheat.util.getAngleDst(cheat.controls.object.rotation.y, target.yD);
+		ang = cheat.util.getAngleDst(cheat.controls.object.rotation.y, target.yD);
 	
-	cheat.controls.object.rotation.y += ak * aj * turn, ak = cheat.util.getAngleDst(cheat.controls[cheat.vars.pchObjc].rotation.x, target.xD), 
+	cheat.controls.object.rotation.y += ang * aj * turn, ang = cheat.util.getAngleDst(cheat.controls[cheat.vars.pchObjc].rotation.x, target.xD), 
 	
-	cheat.controls[cheat.vars.pchObjc].rotation.x += ak * aj * turn, ak = cheat.util.getD3D(cheat.controls.object.position.x, cheat.controls.object.position.y, cheat.controls.object.position.z, target.x, target.y, target.z) * aj * speed;
+	cheat.controls[cheat.vars.pchObjc].rotation.x += ang * aj * turn, ang = cheat.util.getD3D(cheat.controls.object.position.x, cheat.controls.object.position.y, cheat.controls.object.position.z, target.x, target.y, target.z) * aj * speed;
 	
 	var al = cheat.util.getDir(cheat.controls.object.position.z, cheat.controls.object.position.x, target.z, target.x),
 		am = cheat.util.getXDire(cheat.controls.object.position.x, cheat.controls.object.position.y, cheat.controls.object.position.z, target.x, target.y, target.z);
 	
-	cheat.controls.object.position.x -= ak * Math.sin(al) * Math.cos(am), cheat.controls.object.position.y += ak * Math.sin(am), 
-	cheat.controls.object.position.z -= ak * Math.cos(al) * Math.cos(am), cheat.world.updateFrustum();
+	cheat.controls.object.position.x -= ang * Math.sin(al) * Math.cos(am), cheat.controls.object.position.y += ang * Math.sin(am), 
+	cheat.controls.object.position.z -= ang * Math.cos(al) * Math.cos(am), cheat.world.updateFrustum();
 };
 
 module.exports = (cheat, data) => {
@@ -20,6 +20,13 @@ module.exports = (cheat, data) => {
 		move_dirs = { idle: -1, forward: 1, back: 5, left: 7, right: 3 },
 		target = cheat.target = cheat.game.players.list.filter(ent => ent[cheat.add] && !ent[cheat.add].is_you && ent[cheat.add].canSee && ent[cheat.add].active && ent[cheat.add].enemy && (cheat.config.aim.frustrum_check ? ent[cheat.add].frustum : true)).sort(cheat.sorts.norm)[0],
 		pm = cheat.game.players.list.filter(ent => ent && ent[cheat.add] && ent[cheat.add].active && ent[cheat.add].enemy && ent[cheat.add].canSee).map(ent => ent[cheat.add].obj);
+	
+	// arrow controls
+	cheat.controls[cheat.vars.pchObjc].rotation.x -= cheat.ui.inputs.ArrowDown ? 0.006 : 0;
+	cheat.controls[cheat.vars.pchObjc].rotation.x += cheat.ui.inputs.ArrowUp ? 0.006 : 0;
+	
+	cheat.controls.object.rotation.y -= cheat.ui.inputs.ArrowRight ? 0.00675 : 0;
+	cheat.controls.object.rotation.y += cheat.ui.inputs.ArrowLeft ? 0.00675 : 0;
 	
 	// bhop
 	if(cheat.config.game.bhop != 'off' && (cheat.ui.inputs.Space || cheat.config.game.bhop == 'autojump' || cheat.config.game.bhop == 'autoslide')){

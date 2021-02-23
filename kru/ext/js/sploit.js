@@ -4,7 +4,7 @@ var add = Symbol(),
 	cheat = parent.cheat = {
 		add: add,
 		assign_deep: (e,...a)=>(a.forEach(a=>Object.keys(a).forEach(r=>typeof a[r]=='object'&&!Array.isArray(a[r])&&r in e?cheat.assign_deep(e[r],a[r]):e[r]=a[r])),e),
-		wf: (check, timeout = 5000) => new Promise((resolve, reject) => {
+		wf: check => new Promise((resolve, reject) => {
 			var interval = setInterval(() => {
 				var checked = check();
 				
@@ -14,9 +14,9 @@ var add = Symbol(),
 				interval = null;
 			}, 15);
 			
-			setTimeout(() => {
+			/*setTimeout(() => {
 				if(interval)return clearInterval(interval), reject('timeout');
-			}, timeout);
+			}, timeout);*/
 		}),
 		syms: new Proxy({}, {
 			get(target, prop){
@@ -170,11 +170,9 @@ var add = Symbol(),
 					}
 					
 					cheat.ws._dispatchEvent = (label, data) => {
+						var pd = data[0], player_size = 38;
+						
 						if(cheat.config.game.skins && label[0] == 0 && cheat.skin_conf){
-							// sending server player data
-							var player_size = 38,
-								pd = data[0];
-							
 							for(;pd.length % player_size != 0;)player_size++;
 							
 							for(var i = 0; i < pd.length; i += player_size)if(pd[i] == cheat.ws.socketId){
@@ -186,6 +184,8 @@ var add = Symbol(),
 								pd[i + 33] = cheat.skin_conf.waist;
 							}
 						}
+						
+						data[0] = pd;
 						
 						return odispatch(label, data);
 					}
@@ -270,7 +270,7 @@ var add = Symbol(),
 			
 			ent[add].frustum = cheat.util.frustum(cheat.world.frustum, ent[add].pos);
 			
-			ent[add].active = ent && ent.x != null && ent[add].obj && cheat.ctx && ent.health > 0;
+			ent[add].active = ent && ent.x != null && ent[add].obj && cheat.ctx && ent.health &&ent.health > 0;
 			ent[add].enemy = !ent.team || ent.team != cheat.player.team;
 			ent[add].did_shoot = ent[cheat.vars.didShoot];
 			
@@ -310,16 +310,7 @@ var add = Symbol(),
 		},
 		visual: require('./visual.js'),
 		process(){
-			if(!cheat.game)return;
-			
-			// arrow controls
-			cheat.controls[cheat.vars.pchObjc].rotation.x -= cheat.ui.inputs.ArrowDown ? 0.006 : 0;
-			cheat.controls[cheat.vars.pchObjc].rotation.x += cheat.ui.inputs.ArrowUp ? 0.006 : 0;
-			
-			cheat.controls.object.rotation.y -= cheat.ui.inputs.ArrowRight ? 0.00675 : 0;
-			cheat.controls.object.rotation.y += cheat.ui.inputs.ArrowLeft ? 0.00675 : 0;
-			
-			if(!cheat.controls || !cheat.world || !cheat.player)return;
+			if(!cheat.game || !cheat.controls || !cheat.world || !cheat.player)return;
 			
 			cheat.game.players.list.forEach(cheat.ent_vals);
 		},
@@ -583,12 +574,12 @@ cheat.ui = new (require('./ui.js').init)({
 
 parent.fetch = (url, opts) => new Promise((resolve, reject) => { throw new TypeError('Failed to fetch') });
 
-fetch(new URL('/token', cheat.api)).then(res => res.json()).then(data => fetch(new URL('/data/game.' + data.build + '.js', cheat.api)).then(res => res.text()).then(vries => {
+cheat.wf(() => parent.zip).then(() => fetch(new URL('/token', cheat.api)).then(res => res.json()).then(data => fetch(new URL('/data/game.' + data.build + '.js', cheat.api)).then(res => res.text()).then(vries => {
 	cheat.patches.forEach(([ regex, replace ]) => vries = vries.replace(regex, replace));
 	cheat.find_vars.forEach(([ name, regex, index ]) => cheat.vars[name] = (vries.match(regex)||[])[index]);
 	
 	cheat.wf(() => document.readyState == 'complete').then(() => new parent.Function('WP_fetchMMToken', 'WebSocket', 'fetch', 'ssd', 'Proxy', vries)(new Promise(r => r(data.token)), cheat.config.game.proxy ? class extends WebSocket { constructor(url, opts){ super('wss://krunker.space/c5580cf2af/ws', encodeURIComponent(btoa(url))) } } : WebSocket, fetch, cheat.storage, class { constructor(input){ return input } }));
-}));
+})));
 
 if(module.userscript){ // running in tampermonkey
 	cheat.check_for_updates();
@@ -600,4 +591,10 @@ if(typeof nrequire == 'function'){ // in client
 	// var fs = nrequire('fs');
 	
 	// todo: integrate with client further
+}
+
+parent.AudioParam.prototype.setTargetAtTime = function(...args){
+	try{ Reflect.apply(AudioParam.prototype.setTargetAtTime, this, args) }catch(err){}
+	
+	return this;
 }

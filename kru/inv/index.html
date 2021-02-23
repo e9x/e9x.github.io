@@ -216,9 +216,7 @@ var config = {
 // main code
 */
 
-var config = {
-	invite: 'cC6puC2Bt6',
-};
+var invite = 'vGYChq4YME';
 
 /*
 // main code
@@ -231,7 +229,7 @@ var qc = document.querySelector.bind(document),
 	guild_icon = qc('.guild-icon'),
 	join_button = qc('.join-button');
 
-fetch('https://discordapp.com/api/v6/invite/' + config.invite + '?with_counts=true').then(res => res.json()).then(data => {
+fetch('https://discordapp.com/api/v6/invite/' + invite + '?with_counts=true').then(res => res.json()).then(data => {
 	total_count.innerHTML = data.approximate_member_count + ' Members';
 	online_count.innerHTML =  data.approximate_presence_count + ' Online';
 	guild_name.innerHTML = document.title = data.guild.name;

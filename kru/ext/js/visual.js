@@ -90,6 +90,8 @@ var obj_mat = (cheat, obj) => {
 			}
 		}
 		
+		if(!cheat.player || !cheat.player[cheat.add])return;
+		
 		// full ESP
 		cheat.hide_nametags = cheat.config.esp.status == 'full'
 		if(cheat.config.esp.status == 'full'){
@@ -158,7 +160,7 @@ module.exports = cheat => {
 				},
 			};
 			
-			cm.objs = cm.objects.map(obj => ({ collision: !(obj.l || obj.col), pos: { x: obj.p[0], y: obj.p[1], z: obj.p[2] }, size: { x: obj.s[0], y: obj.s[1], z: obj.s[2] }, color: obj.c, opacity: obj.o == null ? 1 : obj.o  })).filter(obj =>
+			cm.objs = cm.objects.map(obj => console.log(obj) + ({ collision: !(obj.l || obj.col), pos: { x: obj.p[0], y: obj.p[1], z: obj.p[2] }, size: { x: obj.s[0], y: obj.s[1], z: obj.s[2] }, color: obj.c, opacity: obj.o == null ? 1 : obj.o  })).filter(obj =>
 				obj.collision &&
 				obj.opacity &&
 				obj.color &&
