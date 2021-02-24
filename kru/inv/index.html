@@ -17,16 +17,17 @@
 		<meta property='og:image:height' content='512' />
 		<link rel='icon' href='data:image/vnd.microsoft.icon;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAACLUlEQVR4Ae2W09YdMQCFy9v2AXpb3fYJqjeqbdu2bdu23R7b5m52fmcdjP65OnutPZ6dL8kkmT4dmrjya3/hOcIRYfSSI+1l9O+jiACzhGGTZ9UCCNsIEK4FADvdAtAFsHrfH9x7GcG7b0lcfhDEkh2/sPbAX2w55pBeI46X7f6Nx2+j+OvO8lm+Yx5g3uafeP89CX84Lwv/+ieNbK6MekqmS/L57//SSGfLfIcZxgHefk2gXK5K61WxWOGOGcYAFmz7iUoVZsUMZukHuPk0DKt040lIP0AkXoRFYpY+AH7BtZQvVPDLmZF7ValMGb9dGZRqfy/M1A5w7k4Aqvj1L9r+i/e5l+cdCkYLmLXhh7y37uBflGt8PMzUDMAvVxGHVI8Annfo9rNwj3sufw6qmKkZwBPMQxVrOWX1N97nXp536Icj3fnu7E0/kMtXoIiZ2gHqTTb/PFlceRCUe1Vffqdw9WFQTlo1xEztAN17kMeZbBl6lc2Xe3wLPNIMoNaCzXdL9PNPR6bp5OTwZnHneRh/lVZipmaAeVt+yuGmzmgvP8UxY913uQCduuGT3XHtUQinb/qx85QTc0T/P3kXU4cis5ipHYCeJLz7jEsuLolUSYZuPe5ouszyGT6baF+YmDGp9UOiEaAFkLW4EB8z9QDstxggKTxeOKEVYLDwTYshxgiPEg41BFBARvJFizykPXOYsFMBsFeEEX5nO4ACMUj4uu0ACsRA4T0d5/8BF8kBJfv/LssAAAAASUVORK5CYII=' />
 		<style>
+
 @font-face {
 	font-family: Whitney;
 	font-weight: 600;
-	src: url(https://sys32.dev/app/media?url=aHR0cHM6Ly9kaXNjb3JkYXBwLmNvbS9hc3NldHMvYmUwMDYwZGFmYjdhMGUzMWQyYTFjYTE3YzA3MDg2MzYud29mZg==) format('woff')
+	src: url(whitney600.woff) format('woff')
 }
 
 @font-face {
 	font-family: Whitney;
 	font-weight: 700;
-	src: url(https://sys32.dev/app/media?url=aHR0cHM6Ly9kaXNjb3JkYXBwLmNvbS9hc3NldHMvOGUxMmZiNGYxNGQ5YzQ1OTJlYjhlYzlmMjIzMzdiMDQud29mZg==) format('woff')
+	src: url(whitney700.woff) format('woff')
 }
 
 body {
@@ -35,14 +36,14 @@ body {
 	font-family: Whitney;
 	height: 100vh;
 	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
-.wrapper {
-	margin: auto;
-}
 
-.guild-invite {
-	width: 432px;
+.invite {
+	width: 400px;
+	height: 74px;
 	background: #2f3136;
 	border-radius: 4px;
 	padding: 16px;
@@ -195,7 +196,8 @@ body {
 		</style>
 	</head>
 	<body>
-		<div class='wrapper'>
+		<div data-invite='upA3nap6Ug'></div>
+		<div class='invite'>
 			<div class='inv-desc'>You've been invited to join a server</div>
 			<div class='content'>
 				<div class='guild-icon'></div>
@@ -208,10 +210,6 @@ body {
 			</div>
 		</div>
 		<script>
-var config = {
-	invite: 'upA3nap6Ug',
-};
-
 /*
 // main code
 */
