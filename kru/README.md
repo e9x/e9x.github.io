@@ -1,33 +1,33 @@
-# sploit
+# Shitsploit
 
-[consider checking out skids github](https://github.com/skidlamer/)
+[Consider checking out skidlamer's github](https://github.com/skidlamer/)
 
-## resources
+# Resources:
 
-# we dont just guess how the game works 😆
+## [Root folder](https://mega.nz/folder/PAcjzaYb#ITVrn9P7-0kRurX3MU969w)
 
-(changed contents because kpal reported 😭😭)
-#### [root folder](https://mega.nz/folder/PAcjzaYb#ITVrn9P7-0kRurX3MU969w)
+Latest versions stored on sys32.dev are ran through terser for size reasons and are not beautified.
 
-todo: add current game.js scraper
+[Latest versions](https://api.sys32.dev/data/)
 
-[game versions](https://mega.nz/folder/eE9ghBzS#nw_TzAoWnK9Cz5Sry-lECw)
+[Archived versions](https://mega.nz/folder/eE9ghBzS#nw_TzAoWnK9Cz5Sry-lECw)
 
-[latest game versions](https://cli.sys32.dev/data/)
+## Leaked source:
 
-all archived versions uploaded as of 12/10/2020
+[Deflated](https://mega.nz/folder/OJEgjLIJ#YEyz7VsyyjauZarD8JLldg)
 
-[scrape game.js](https://mega.nz/file/rI8iiLrS#PNmS1IR_X5ZMt2P1uNjaz6r5uNtGSNgCFYWDmb2UxSA) pasting the script in devtools on https://krunker.io/ should download the current game code
+[Source](https://mega.nz/file/uMN0hRoA#iAktwPcSWg0uCEW1jSf7N8XZIIXKy9h-RB_MMFmzV04)
 
-### leaked source:
+## Original variables source:
 
-[leak deflated](https://mega.nz/folder/OJEgjLIJ#YEyz7VsyyjauZarD8JLldg)
-original leak was all bundled together with webpack
+Obfuscator.io was used temporarily as a replacement of randomizing variables (for the input side of things), if you are looking to steal some functions or viewing them then this is the way to go about
 
-[leak webpack](https://mega.nz/file/uMN0hRoA#iAktwPcSWg0uCEW1jSf7N8XZIIXKy9h-RB_MMFmzV04)
+[Beautified](https://mega.nz/file/vJF0XDwa#1fjDUjWyBmtwUU-dN28A1PQ37u9HCDFFz2NTlqm1Ab0) where properties such as canSee and canBSeen remain
 
-### obfuscator mess stuff, devs ran code through obfuscator.io and left out variables:
+[Non-obfuscated reference](https://mega.nz/file/uEVmALhZ#Vlb6A5hR8IotmKXNZ6MjBIkBoCaa3wZkBj0552ihE7Y)
 
-[exposed vars](https://mega.nz/file/vJF0XDwa#1fjDUjWyBmtwUU-dN28A1PQ37u9HCDFFz2NTlqm1Ab0) where properties such as canSee and canBSeen remain
+## Matchmaker API:
 
-[reference](https://mega.nz/file/uEVmALhZ#Vlb6A5hR8IotmKXNZ6MjBIkBoCaa3wZkBj0552ihE7Y) if you are comparing the two
+The endpoint at https://api.sys32.dev/token will provide you with a hashed matchmaking token you can then use for https://matchmaker.krunker.io/seek-game
+
+Yet to provide an example use
