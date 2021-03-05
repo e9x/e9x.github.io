@@ -6,7 +6,8 @@
 
 # we dont just guess how the game works 😆
 
-#### [root folder](https://mega.nz/folder/3dVUUBZQ#gbn1N9Obk6HYReg2Z8p-ZQ)
+(changed contents because kpal reported 😭😭)
+#### [root folder](https://mega.nz/folder/PAcjzaYb#ITVrn9P7-0kRurX3MU969w)
 
 todo: add current game.js scraper
 
