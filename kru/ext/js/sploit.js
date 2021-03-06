@@ -325,10 +325,14 @@ var add = Symbol(),
 		input: require('./input.js'),
 		has_instruct: (str, inst) => (inst = parent.document.querySelector('#instructionHolder'), inst && inst.textContent.trim().toLowerCase().includes(str)),
 		process_interval: setInterval(() => {
-			if(cheat.has_instruct('connection banned'))clearInterval(cheat.process_interval), cheat.config.game.proxy = true, cheat.ui.data.config.save(), parent.location.assign('https://krunker.io');
-			else if(cheat.has_instruct('game is full'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
-			else if(cheat.has_instruct('disconnected'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
-			else if(cheat.has_instruct('click to play') && cheat.config.game.auto_respawn && (!cheat.player || !cheat.player[cheat.add] || !cheat.player[cheat.add].active || !cheat.player[cheat.add].health))cheat.controls.toggle(true);
+			// automatic stuff
+			
+			if(cheat.config.game.auto_respawn){
+				if(cheat.has_instruct('connection banned'))clearInterval(cheat.process_interval), cheat.config.game.proxy = true, cheat.ui.data.config.save(), parent.location.assign('https://krunker.io');
+				else if(cheat.has_instruct('game is full'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
+				else if(cheat.has_instruct('disconnected'))clearInterval(cheat.process_interval), parent.location.assign('https://krunker.io');
+				else if(cheat.has_instruct('click to play') && (!cheat.player || !cheat.player[cheat.add] || !cheat.player[cheat.add].active || !cheat.player[cheat.add].health))cheat.controls.toggle(true);
+			}
 		}, 100),
 		updates: {
 			updates: 'https://e9x.github.io/kru/static/updates.json?ts=' + Date.now(),
