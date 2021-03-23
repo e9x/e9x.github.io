@@ -2,4 +2,4 @@
 
 ### Repo for my various projects
 
-[Shitsploit, Krunker cheat](kru/)
+[Sploit, Krunker cheat](kru/)
